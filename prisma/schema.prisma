@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String  @id @default(cuid())
+  name         String
+  email        String  @unique
+  passwordHash String
+  role         Role    @default(STUDENT)
+  suspended    Boolean @default(false)
+  banned       Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  courses      Course[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
+
+  @@map("users")
+}
+
+model Course {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  language    Language
+  level       Level
+  imageUrl    String?
+  isPublished Boolean     @default(false)
+  createdById String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  createdBy    User         @relation(fields: [createdById], references: [id])
+  lessons      Lesson[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
+
+  @@map("courses")
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  courseId    String
+  title       String
+  contentHtml String?
+  audioUrl    String?
+  imageUrl    String?
+  order       Int
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quizzes Quiz[]
+
+  @@map("lessons")
+}
+
+model Quiz {
+  id            String    @id @default(cuid())
+  lessonId      String
+  type          QuizType
+  question      String
+  options       Json      // Array of options for MCQ
+  correctAnswer String
+  explanation   String?
+  order         Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("quizzes")
+}
+
+model Enrollment {
+  userId    String
+  courseId  String
+  progress  Float    @default(0) // Progress percentage (0-100)
+  score     Float?   // Overall score
+  startedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@id([userId, courseId])
+  @@map("enrollments")
+}
+
+model Certificate {
+  id         String   @id @default(cuid())
+  userId     String
+  courseId   String
+  score      Float
+  dateIssued DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@map("certificates")
+}
+
+enum Role {
+  STUDENT
+  TUTOR
+  ADMIN
+}
+
+enum Language {
+  YORUBA
+  IGBO
+  HAUSA
+  EFIK
+  TIV
+  FULFULDE
+  KANURI
+  IBIBIO
+  EDO
+  IJAW
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum QuizType {
+  MCQ
+  DRAG_DROP
+  AUDIO_MATCH
+  VOICE_MATCH
+}
