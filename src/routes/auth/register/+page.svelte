@@ -5,16 +5,38 @@
 	
 	let { form }: { form: ActionData } = $props();
 	
-	let showPassword = false;
-	let showConfirmPassword = false;
-	let loading = false;
+	// Local form state to prevent resets
+	let formData = $state({
+		name: '',
+		email: '',
+		password: '',
+		confirmPassword: ''
+	});
 	
-	function togglePassword() {
+	let showPassword = $state(false);
+	let showConfirmPassword = $state(false);
+	let loading = $state(false);
+	
+	// Initialize form data from server response
+	$effect(() => {
+		if (form?.name) formData.name = form.name;
+		if (form?.email) formData.email = form.email;
+	});
+	
+	function togglePassword(event: Event) {
+		event.preventDefault();
+		event.stopPropagation();
+		event.stopImmediatePropagation();
 		showPassword = !showPassword;
+		return false;
 	}
 	
-	function toggleConfirmPassword() {
+	function toggleConfirmPassword(event: Event) {
+		event.preventDefault();
+		event.stopPropagation();
+		event.stopImmediatePropagation();
 		showConfirmPassword = !showConfirmPassword;
+		return false;
 	}
 </script>
 
@@ -66,7 +88,7 @@
 							type="text"
 							id="name"
 							name="name"
-							value={form?.name ?? ''}
+							bind:value={formData.name}
 							required
 							class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
 							placeholder="Enter your full name"
@@ -89,7 +111,7 @@
 							type="email"
 							id="email"
 							name="email"
-							value={form?.email ?? ''}
+							bind:value={formData.email}
 							required
 							class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
 							placeholder="your@email.com"
@@ -112,14 +134,17 @@
 							type={showPassword ? 'text' : 'password'}
 							id="password"
 							name="password"
+							bind:value={formData.password}
 							required
 							class="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
 							placeholder="Create a password"
 						/>
 						<button
 							type="button"
-							on:click={togglePassword}
-							class="absolute inset-y-0 right-0 pr-3 flex items-center"
+							onclick={togglePassword}
+							class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer select-none"
+							tabindex="-1"
+							aria-label="Toggle password visibility"
 						>
 							{#if showPassword}
 								<EyeOff class="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -145,14 +170,16 @@
 							type={showConfirmPassword ? 'text' : 'password'}
 							id="confirmPassword"
 							name="confirmPassword"
+							bind:value={formData.confirmPassword}
 							required
 							class="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
 							placeholder="Confirm your password"
 						/>
 						<button
 							type="button"
-							on:click={toggleConfirmPassword}
+							onclick={toggleConfirmPassword}
 							class="absolute inset-y-0 right-0 pr-3 flex items-center"
+							tabindex="-1"
 						>
 							{#if showConfirmPassword}
 								<EyeOff class="h-5 w-5 text-gray-400 hover:text-gray-600" />

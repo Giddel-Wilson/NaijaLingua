@@ -14,18 +14,18 @@
 	let { data }: { data: PageData } = $props();
 	
 	// Calculate stats
-	$: totalCourses = data.enrollments.length;
-	$: completedCourses = data.certificates.length;
-	$: averageProgress = data.enrollments.length > 0 
+	const totalCourses = $derived(data.enrollments.length);
+	const completedCourses = $derived(data.certificates.length);
+	const averageProgress = $derived(data.enrollments.length > 0 
 		? data.enrollments.reduce((sum, enrollment) => sum + enrollment.progress, 0) / data.enrollments.length
-		: 0;
+		: 0);
 	
 	// Recent activity
-	$: recentEnrollments = data.enrollments
+	const recentEnrollments = $derived(data.enrollments
 		.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-		.slice(0, 3);
+		.slice(0, 3));
 	
-	$: recentCertificates = data.certificates.slice(0, 3);
+	const recentCertificates = $derived(data.certificates.slice(0, 3));
 </script>
 
 <svelte:head>

@@ -2,36 +2,44 @@ import { db } from '$lib/db';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const courses = await db.course.findMany({
-		where: {
-			isPublished: true
-		},
-		include: {
-			createdBy: {
-				select: {
-					name: true
-				}
+	try {
+		const courses = await db.course.findMany({
+			where: {
+				isPublished: true
 			},
-			lessons: {
-				where: {
-					isPublished: true
+			include: {
+				createdBy: {
+					select: {
+						name: true
+					}
 				},
-				select: {
-					id: true
+				lessons: {
+					where: {
+						isPublished: true
+					},
+					select: {
+						id: true
+					}
+				},
+				enrollments: {
+					select: {
+						userId: true
+					}
 				}
 			},
-			enrollments: {
-				select: {
-					userId: true
-				}
+			orderBy: {
+				createdAt: 'desc'
 			}
-		},
-		orderBy: {
-			createdAt: 'desc'
-		}
-	});
-	
-	return {
-		courses
-	};
+		});
+		
+		return {
+			courses
+		};
+	} catch (error) {
+		console.error('Error loading courses:', error);
+		// Return empty array if database is not available or has no data
+		return {
+			courses: []
+		};
+	}
 };

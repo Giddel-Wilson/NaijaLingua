@@ -13,8 +13,8 @@
 		}
 	} = $props();
 	
-	$: studentCount = course.enrollments.length;
-	$: lessonCount = course.lessons.length;
+	const studentCount = $derived(course.enrollments.length);
+	const lessonCount = $derived(course.lessons.length);
 	
 	function getCourseGradient(language: string) {
 		const gradients: Record<string, string> = {

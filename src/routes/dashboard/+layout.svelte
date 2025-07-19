@@ -13,7 +13,7 @@
 	
 	let { data, children }: { data: LayoutData; children: any } = $props();
 	
-	$: currentPath = $page.url.pathname;
+	const currentPath = $derived($page.url.pathname);
 	
 	const studentNavItems = [
 		{ href: '/dashboard', label: 'Overview', icon: Home },
@@ -32,7 +32,7 @@
 		{ href: '/dashboard/settings', label: 'Settings', icon: Settings }
 	];
 	
-	$: navItems = data.user.role === 'TUTOR' || data.user.role === 'ADMIN' ? tutorNavItems : studentNavItems;
+	const navItems = $derived(data.user.role === 'TUTOR' || data.user.role === 'ADMIN' ? tutorNavItems : studentNavItems);
 </script>
 
 <div class="min-h-screen bg-neutral">
