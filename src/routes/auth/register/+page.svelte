@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import { Mail, Lock, User, Eye, EyeOff } from 'lucide-svelte';
+	import { toasts } from '$lib/stores/toast';
 	import type { ActionData } from './$types';
 	
 	let { form }: { form: ActionData } = $props();
@@ -16,11 +18,35 @@
 	let showPassword = $state(false);
 	let showConfirmPassword = $state(false);
 	let loading = $state(false);
+	let countdown = $state(0);
+	let isRedirecting = $state(false);
 	
 	// Initialize form data from server response
 	$effect(() => {
 		if (form?.name) formData.name = form.name;
 		if (form?.email) formData.email = form.email;
+		
+		// Handle successful registration
+		if (form?.success) {
+			isRedirecting = true;
+			countdown = 5;
+			
+			// Show success toast
+			toasts.add({
+				message: 'Account created successfully! Redirecting to login page...',
+				type: 'success',
+				duration: 5000
+			});
+			
+			// Start countdown
+			const countdownInterval = setInterval(() => {
+				countdown--;
+				if (countdown <= 0) {
+					clearInterval(countdownInterval);
+					goto('/auth/login?registered=true');
+				}
+			}, 1000);
+		}
 	});
 	
 	function togglePassword(event: Event) {
@@ -55,6 +81,7 @@
 			<form 
 				method="POST" 
 				action="?/register"
+				class="space-y-6 {isRedirecting ? 'pointer-events-none opacity-75' : ''}"
 				use:enhance={() => {
 					loading = true;
 					return async ({ result, update }) => {
@@ -69,7 +96,6 @@
 						await update();
 					};
 				}}
-				class="space-y-6"
 			>
 				{#if form?.error}
 					<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -216,13 +242,19 @@
 					</label>
 				</div>
 				
-				<button
-					type="submit"
-					disabled={loading}
-					class="w-full btn-primary {loading ? 'opacity-50 cursor-not-allowed' : ''}"
-				>
-					{loading ? 'Creating account...' : 'Create account'}
-				</button>
+				{#if !isRedirecting}
+					<button
+						type="submit"
+						disabled={loading}
+						class="w-full btn-primary {loading ? 'opacity-50 cursor-not-allowed' : ''}"
+					>
+						{loading ? 'Creating account...' : 'Create account'}
+					</button>
+				{:else}
+					<div class="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg text-center">
+						Registration Successful! Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
+					</div>
+				{/if}
 			</form>
 		</div>
 		

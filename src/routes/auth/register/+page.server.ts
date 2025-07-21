@@ -42,17 +42,23 @@ export const actions: Actions = {
 		
 		try {
 			// Check if user already exists
+			console.log('Checking for existing user with email:', validation.data.email.toLowerCase());
 			const existingUser = await db.user.findUnique({
 				where: { email: validation.data.email.toLowerCase() }
 			});
 			
+			console.log('Existing user found:', existingUser);
+			
 			if (existingUser) {
+				console.log('User already exists, returning error');
 				return fail(400, {
 					error: 'An account with this email already exists.',
 					name,
 					email
 				});
 			}
+			
+			console.log('No existing user, proceeding with registration');
 			
 			// Hash password
 			const passwordHash = await hashPassword(validation.data.password);
@@ -67,8 +73,13 @@ export const actions: Actions = {
 				}
 			});
 			
-			// Don't automatically log in the user - let them login manually
-			// This ensures they remember their password and confirms the account works
+			console.log('User created successfully:', user.email);
+			
+			// Return success message instead of redirecting
+			return {
+				success: true,
+				message: 'Account created successfully! Redirecting to login page...'
+			};
 			
 		} catch (error) {
 			console.error('Registration error:', error);
@@ -78,8 +89,5 @@ export const actions: Actions = {
 				email
 			});
 		}
-		
-		// Redirect to login page with success message
-		throw redirect(303, '/auth/login?registered=true');
 	}
 };

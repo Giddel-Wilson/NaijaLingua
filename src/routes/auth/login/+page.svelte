@@ -45,8 +45,15 @@
 				action="?/login"
 				use:enhance={() => {
 					loading = true;
-					return async ({ update }) => {
+					return async ({ result, update }) => {
 						loading = false;
+						
+						// For redirects, don't call update - let SvelteKit handle it
+						if (result.type === 'redirect') {
+							return;
+						}
+						
+						// For other results, update normally
 						await update();
 					};
 				}}

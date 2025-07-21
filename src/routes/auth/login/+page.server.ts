@@ -29,9 +29,11 @@ export const actions: Actions = {
 			});
 		}
 		
+		let user;
+		
 		try {
 			// Find user by email
-			const user = await db.user.findUnique({
+			user = await db.user.findUnique({
 				where: { email: validation.data.email.toLowerCase() }
 			});
 			
@@ -78,22 +80,19 @@ export const actions: Actions = {
 				maxAge: 60 * 60 * 24 * 7 // 7 days
 			});
 			
-			// Redirect based on role
-			if (user.role === 'ADMIN') {
-				throw redirect(303, '/admin');
-			} else {
-				throw redirect(303, '/dashboard');
-			}
 		} catch (error) {
-			if (error instanceof Response) {
-				throw error;
-			}
-			
 			console.error('Login error:', error);
 			return fail(500, {
 				error: 'An error occurred. Please try again.',
 				email
 			});
+		}
+		
+		// Redirect based on role (outside try-catch to avoid catching redirects)
+		if (user.role === 'ADMIN') {
+			redirect(303, '/admin');
+		} else {
+			redirect(303, '/dashboard');
 		}
 	}
 };

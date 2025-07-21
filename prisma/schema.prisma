@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,41 +8,37 @@ datasource db {
 }
 
 model User {
-  id           String  @id @default(cuid())
+  id           String        @id @default(cuid())
   name         String
-  email        String  @unique
+  email        String        @unique
   passwordHash String
-  role         Role    @default(STUDENT)
-  suspended    Boolean @default(false)
-  banned       Boolean @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
+  role         Role          @default(STUDENT)
+  suspended    Boolean       @default(false)
+  banned       Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  certificates Certificate[]
   courses      Course[]
   enrollments  Enrollment[]
-  certificates Certificate[]
 
   @@map("users")
 }
 
 model Course {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  language    Language
-  level       Level
-  imageUrl    String?
-  isPublished Boolean     @default(false)
-  createdById String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  // Relations
-  createdBy    User         @relation(fields: [createdById], references: [id])
-  lessons      Lesson[]
-  enrollments  Enrollment[]
+  id           String        @id @default(cuid())
+  title        String
+  description  String?
+  language     Language
+  level        Level
+  imageUrl     String?
+  isPublished  Boolean       @default(false)
+  createdById  String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   certificates Certificate[]
+  createdBy    User          @relation(fields: [createdById], references: [id])
+  enrollments  Enrollment[]
+  lessons      Lesson[]
 
   @@map("courses")
 }
@@ -61,28 +54,24 @@ model Lesson {
   isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  // Relations
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  quizzes Quiz[]
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quizzes     Quiz[]
 
   @@map("lessons")
 }
 
 model Quiz {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   lessonId      String
   type          QuizType
   question      String
-  options       Json      // Array of options for MCQ
+  options       Json
   correctAnswer String
   explanation   String?
   order         Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relations
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@map("quizzes")
 }
@@ -90,14 +79,12 @@ model Quiz {
 model Enrollment {
   userId    String
   courseId  String
-  progress  Float    @default(0) // Progress percentage (0-100)
-  score     Float?   // Overall score
+  progress  Float    @default(0)
+  score     Float?
   startedAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Relations
-  user   User   @relation(fields: [userId], references: [id])
-  course Course @relation(fields: [courseId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@id([userId, courseId])
   @@map("enrollments")
@@ -109,10 +96,8 @@ model Certificate {
   courseId   String
   score      Float
   dateIssued DateTime @default(now())
-
-  // Relations
-  user   User   @relation(fields: [userId], references: [id])
-  course Course @relation(fields: [courseId], references: [id])
+  course     Course   @relation(fields: [courseId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 
   @@map("certificates")
 }
