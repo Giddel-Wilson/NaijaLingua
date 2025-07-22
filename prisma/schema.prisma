@@ -13,6 +13,8 @@ model User {
   email        String        @unique
   passwordHash String
   role         Role          @default(STUDENT)
+  bio          String?
+  profileImage String?
   suspended    Boolean       @default(false)
   banned       Boolean       @default(false)
   createdAt    DateTime      @default(now())
