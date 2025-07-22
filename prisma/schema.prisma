@@ -33,7 +33,12 @@ model Course {
   language     Language
   level        Level
   imageUrl     String?
+  price        Float         @default(0)
+  currency     String        @default("USD")
+  category     String?
+  tags         String[]      @default([])
   isPublished  Boolean       @default(false)
+  isApproved   Boolean       @default(false)
   createdById  String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -49,17 +54,36 @@ model Lesson {
   id          String   @id @default(cuid())
   courseId    String
   title       String
+  description String?
   contentHtml String?
+  videoUrl    String?
   audioUrl    String?
   imageUrl    String?
+  duration    Int?     // duration in minutes
   order       Int
   isPublished Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   quizzes     Quiz[]
+  progress    LessonProgress[]
 
   @@map("lessons")
+}
+
+model LessonProgress {
+  id         String   @id @default(cuid())
+  userId     String
+  lessonId   String
+  completed  Boolean  @default(false)
+  timeSpent  Int      @default(0) // in minutes
+  completedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("lesson_progress")
 }
 
 model Quiz {
@@ -70,23 +94,43 @@ model Quiz {
   options       Json
   correctAnswer String
   explanation   String?
+  points        Int      @default(10)
   order         Int
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  attempts      QuizAttempt[]
 
   @@map("quizzes")
 }
 
+model QuizAttempt {
+  id         String   @id @default(cuid())
+  userId     String
+  quizId     String
+  answer     String
+  isCorrect  Boolean
+  score      Int      @default(0)
+  attemptedAt DateTime @default(now())
+  quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
 model Enrollment {
-  userId    String
-  courseId  String
-  progress  Float    @default(0)
-  score     Float?
-  startedAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  course    Course   @relation(fields: [courseId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  userId       String
+  courseId     String
+  progress     Float    @default(0)
+  score        Float?
+  totalScore   Float    @default(0)
+  lessonsCompleted Int  @default(0)
+  quizzesCompleted Int  @default(0)
+  isCompleted  Boolean  @default(false)
+  completedAt  DateTime?
+  startedAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  course       Course   @relation(fields: [courseId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
 
   @@id([userId, courseId])
   @@map("enrollments")
@@ -106,7 +150,7 @@ model Certificate {
 
 enum Role {
   STUDENT
-  TUTOR
+  INSTRUCTOR
   ADMIN
 }
 
@@ -121,6 +165,7 @@ enum Language {
   IBIBIO
   EDO
   IJAW
+  PIDGIN
 }
 
 enum Level {
@@ -131,7 +176,9 @@ enum Level {
 
 enum QuizType {
   MCQ
+  TRUE_FALSE
   DRAG_DROP
   AUDIO_MATCH
   VOICE_MATCH
+  FILL_IN_BLANK
 }

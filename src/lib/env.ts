@@ -19,7 +19,11 @@ export const env = {
     UPLOAD_FOLDER: process.env.UPLOAD_FOLDER || 'uploads',
     PUBLIC_APP_NAME: process.env.PUBLIC_APP_NAME || 'NaijaLingua',
     PUBLIC_APP_URL: process.env.PUBLIC_APP_URL || 'http://localhost:5173',
-    NODE_ENV: process.env.NODE_ENV || 'development'
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    // Cloudinary Configuration
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '118984526168835',
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '0H8AoF9a4EESOC9biI2GV4_LBQk'
 };
 
 // Validate environment on module load

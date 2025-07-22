@@ -37,12 +37,20 @@ export function verifyToken(token: string): JWTPayload | null {
 	}
 }
 
+// Alias for verifyToken to maintain consistency
+export const verifyJWT = verifyToken;
+
 export function isAdmin(user: User | null): boolean {
 	return user?.role === 'ADMIN';
 }
 
+export function isInstructor(user: User | null): boolean {
+	return user?.role === 'INSTRUCTOR' || user?.role === 'ADMIN';
+}
+
 export function isTutor(user: User | null): boolean {
-	return user?.role === 'TUTOR' || user?.role === 'ADMIN';
+	// Keep for backward compatibility, but use isInstructor instead
+	return user?.role === 'INSTRUCTOR' || user?.role === 'ADMIN';
 }
 
 export function isStudent(user: User | null): boolean {
