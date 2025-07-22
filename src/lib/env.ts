@@ -12,19 +12,17 @@ export function validateEnv() {
 }
 
 // Export environment variables with defaults
-export const env = {
-    DATABASE_URL: process.env.DATABASE_URL!,
-    JWT_SECRET: process.env.JWT_SECRET!,
-    AUTH_SECRET: process.env.AUTH_SECRET!,
-    UPLOAD_FOLDER: process.env.UPLOAD_FOLDER || 'uploads',
-    PUBLIC_APP_NAME: process.env.PUBLIC_APP_NAME || 'NaijaLingua',
-    PUBLIC_APP_URL: process.env.PUBLIC_APP_URL || 'http://localhost:5173',
-    NODE_ENV: process.env.NODE_ENV || 'development',
-    // Cloudinary Configuration
-    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '',
-    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '118984526168835',
-    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '0H8AoF9a4EESOC9biI2GV4_LBQk'
-};
+import { env } from '$env/dynamic/private';
+
+export const JWT_SECRET = env.JWT_SECRET || 'fallback-secret';
+export const AUTH_SECRET = env.AUTH_SECRET || 'fallback-auth-secret';
+export const DATABASE_URL = env.DATABASE_URL || '';
+
+// Cloudinary Configuration
+export const CLOUDINARY_CLOUD_NAME = env.CLOUDINARY_CLOUD_NAME || '';
+export const CLOUDINARY_API_KEY = env.CLOUDINARY_API_KEY || '';
+export const CLOUDINARY_API_SECRET = env.CLOUDINARY_API_SECRET || '';
+export const CLOUDINARY_UPLOAD_PRESET = env.CLOUDINARY_UPLOAD_PRESET || 'naijalingua_preset';
 
 // Validate environment on module load
 validateEnv();

@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { env } from './env';
+import { JWT_SECRET, AUTH_SECRET } from './env';
 import type { User } from '@prisma/client';
 
 export interface JWTPayload {
@@ -24,14 +24,14 @@ export function generateToken(user: Pick<User, 'id' | 'email' | 'role'>): string
 			email: user.email,
 			role: user.role
 		},
-		env.JWT_SECRET,
+		JWT_SECRET,
 		{ expiresIn: '7d' }
 	);
 }
 
 export function verifyToken(token: string): JWTPayload | null {
 	try {
-		return jwt.verify(token, env.JWT_SECRET) as JWTPayload;
+		return jwt.verify(token, JWT_SECRET) as JWTPayload;
 	} catch {
 		return null;
 	}

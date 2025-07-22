@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { User, Camera, Lock, Trash2, Save, Upload } from 'lucide-svelte';
-	import { toastStore } from '$lib/stores/toast';
+	import { toasts } from '$lib/stores/toast';
 	import type { PageData, ActionData } from './$types';
 
 	export let data: PageData;
@@ -20,17 +20,15 @@
 
 		// Validate file type
 		if (!file.type.startsWith('image/')) {
-			toastStore.addToast('Please select a valid image file', 'error');
+			toasts.add({ message: 'Please select a valid image file', type: 'error' });
 			return;
 		}
-
-		// Validate file size (max 5MB)
+		
+		// Check file size (max 5MB)
 		if (file.size > 5 * 1024 * 1024) {
-			toastStore.addToast('Image size must be less than 5MB', 'error');
+			toasts.add({ message: 'Image size must be less than 5MB', type: 'error' });
 			return;
-		}
-
-		isUploading = true;
+		}		isUploading = true;
 
 		try {
 			// Convert to base64 for now (in production, you'd upload to a cloud service)
@@ -41,7 +39,7 @@
 			};
 			reader.readAsDataURL(file);
 		} catch (error) {
-			toastStore.addToast('Failed to upload image', 'error');
+			toasts.add({ message: 'Failed to upload image', type: 'error' });
 			isUploading = false;
 		}
 	}
@@ -50,9 +48,9 @@
 	function handleFormResponse() {
 		return ({ result }: any) => {
 			if (result.type === 'success' && result.data?.success) {
-				toastStore.addToast(result.data.message, 'success');
+				toasts.add({ message: result.data.message, type: 'success' });
 			} else if (result.type === 'failure') {
-				toastStore.addToast(result.data?.message || 'An error occurred', 'error');
+				toasts.add({ message: result.data?.message || 'An error occurred', type: 'error' });
 			}
 		};
 	}
