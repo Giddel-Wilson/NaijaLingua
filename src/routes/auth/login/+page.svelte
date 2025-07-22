@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import { Mail, Lock, Eye, EyeOff } from 'lucide-svelte';
+	import { toasts } from '$lib/stores/toast';
 	import type { ActionData, PageData } from './$types';
 	
 	let { form, data }: { form: ActionData; data: PageData } = $props();
@@ -17,6 +19,21 @@
 	// Initialize form data from server response
 	$effect(() => {
 		if (form?.email) formData.email = form.email;
+		
+		// Handle successful login
+		if (form?.success) {
+			// Show success toast
+			toasts.add({
+				message: form.message || 'Login successful!',
+				type: 'success',
+				duration: 3000
+			});
+			
+			// Redirect after a short delay to show the toast
+			setTimeout(() => {
+				goto(form.redirectTo || '/dashboard');
+			}, 1000);
+		}
 	});
 	
 	function togglePassword(event: Event) {
@@ -48,13 +65,10 @@
 					return async ({ result, update }) => {
 						loading = false;
 						
-						// For redirects, don't call update - let SvelteKit handle it
-						if (result.type === 'redirect') {
-							return;
-						}
-						
-						// For other results, update normally
+						// Always update to get the form data
 						await update();
+						
+						// Don't handle redirects here anymore - we handle them in the effect
 					};
 				}}
 				class="space-y-6"
@@ -62,6 +76,12 @@
 				{#if data?.registered}
 					<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
 						🎉 Registration successful! Please sign in with your new account.
+					</div>
+				{/if}
+				
+				{#if form?.success}
+					<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+						✅ {form.message} Redirecting...
 					</div>
 				{/if}
 				

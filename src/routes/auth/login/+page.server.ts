@@ -80,19 +80,19 @@ export const actions: Actions = {
 				maxAge: 60 * 60 * 24 * 7 // 7 days
 			});
 			
+			// Return success response with redirect URL
+			return {
+				success: true,
+				message: `Welcome back, ${user.name}!`,
+				redirectTo: user.role === 'ADMIN' ? '/admin' : '/dashboard'
+			};
+			
 		} catch (error) {
 			console.error('Login error:', error);
 			return fail(500, {
 				error: 'An error occurred. Please try again.',
 				email
 			});
-		}
-		
-		// Redirect based on role (outside try-catch to avoid catching redirects)
-		if (user.role === 'ADMIN') {
-			redirect(303, '/admin');
-		} else {
-			redirect(303, '/dashboard');
 		}
 	}
 };
