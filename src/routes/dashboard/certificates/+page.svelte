@@ -55,156 +55,116 @@
 		const certificateWindow = window.open('', '_blank');
 		if (!certificateWindow) return;
 
-		const certificateHTML = `
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<title>Certificate - \${certData.courseName}</title>
-				<style>
-					body {
-						font-family: 'Georgia', serif;
-						margin: 0;
-						padding: 40px;
-						background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-						min-height: 100vh;
-						display: flex;
-						align-items: center;
-						justify-content: center;
-					}
-					.certificate {
-						background: white;
-						padding: 60px;
-						border: 10px solid #d4af37;
-						border-radius: 20px;
-						text-align: center;
-						box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-						max-width: 800px;
-						position: relative;
-					}
-					.certificate::before {
-						content: '';
-						position: absolute;
-						top: 20px;
-						left: 20px;
-						right: 20px;
-						bottom: 20px;
-						border: 2px solid #d4af37;
-						border-radius: 10px;
-					}
-					.header {
-						color: #22c55e;
-						margin-bottom: 40px;
-					}
-					.title {
-						font-size: 48px;
-						font-weight: bold;
-						margin-bottom: 20px;
-						color: #22c55e;
-					}
-					.subtitle {
-						font-size: 24px;
-						color: #666;
-						margin-bottom: 40px;
-					}
-					.student-name {
-						font-size: 36px;
-						color: #1f2937;
-						margin: 30px 0;
-						font-weight: bold;
-						border-bottom: 2px solid #d4af37;
-						padding-bottom: 10px;
-						display: inline-block;
-					}
-					.course-info {
-						font-size: 24px;
-						color: #374151;
-						margin: 30px 0;
-					}
-					.details {
-						display: flex;
-						justify-content: space-between;
-						margin-top: 60px;
-						font-size: 16px;
-						color: #666;
-					}
-					.seal {
-						position: absolute;
-						top: 40px;
-						right: 40px;
-						width: 80px;
-						height: 80px;
-						background: #22c55e;
-						border-radius: 50%;
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						color: white;
-						font-weight: bold;
-						font-size: 14px;
-					}
-					@media print {
-						body { background: white; }
-						.certificate { box-shadow: none; }
-					}
-				</style>
-			</head>
-			<body>
-				<div class="certificate">
-					<div class="seal">
-						CERTIFIED
-					</div>
-					
-					<div class="header">
-						<div style="font-size: 20px; font-weight: bold;">NAIJALINGUA</div>
-						<div style="font-size: 14px;">Nigerian Languages Learning Platform</div>
-					</div>
-					
-					<div class="title">Certificate of Completion</div>
-					<div class="subtitle">This is to certify that</div>
-					
-					<div class="student-name">\${certData.studentName}</div>
-					
-					<div style="font-size: 20px; margin: 20px 0;">has successfully completed the course</div>
-					
-					<div class="course-info">
-						<strong>\${certData.courseName}</strong><br>
-						<span style="font-size: 18px; color: #666;">\${certData.language} Language Course</span>
-					</div>
-					
-					<div style="font-size: 18px; margin: 30px 0;">
-						with a score of <strong style="color: #22c55e;">\${certData.score}%</strong>
-					</div>
-					
-					<div class="details">
-						<div>
-							<strong>Date Issued:</strong><br>
-							\${new Date(certData.dateIssued).toLocaleDateString('en-US', { 
-								year: 'numeric', 
-								month: 'long', 
-								day: 'numeric' 
-							})}
-						</div>
-						<div>
-							<strong>Instructor:</strong><br>
-							\${certData.instructor}
-						</div>
-						<div>
-							<strong>Certificate ID:</strong><br>
-							NL-CERT123
-						</div>
-					</div>
+		// Format the date
+		const formattedDate = new Date(certData.dateIssued).toLocaleDateString('en-US', { 
+			year: 'numeric', 
+			month: 'long', 
+			day: 'numeric' 
+		});
+
+		// Create the HTML content using DOM methods to avoid template literal issues
+		const html = document.createElement('html');
+		const head = document.createElement('head');
+		const body = document.createElement('body');
+		
+		// Set title
+		const title = document.createElement('title');
+		title.textContent = `Certificate - ${certData.courseName}`;
+		head.appendChild(title);
+		
+		// Create styles
+		const style = document.createElement('style');
+		style.textContent = `
+			body {
+				font-family: "Georgia", serif;
+				margin: 0;
+				padding: 40px;
+				background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.certificate {
+				background: white;
+				padding: 60px;
+				border: 10px solid #d4af37;
+				border-radius: 20px;
+				text-align: center;
+				box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+				max-width: 800px;
+				position: relative;
+			}
+			.certificate::before {
+				content: "";
+				position: absolute;
+				top: 20px;
+				left: 20px;
+				right: 20px;
+				bottom: 20px;
+				border: 2px solid #d4af37;
+				border-radius: 10px;
+			}
+			.header { color: #22c55e; margin-bottom: 40px; }
+			.title { font-size: 48px; font-weight: bold; margin-bottom: 20px; color: #22c55e; }
+			.subtitle { font-size: 24px; color: #666; margin-bottom: 40px; }
+			.student-name { font-size: 36px; color: #1f2937; margin: 30px 0; font-weight: bold; border-bottom: 2px solid #d4af37; padding-bottom: 10px; display: inline-block; }
+			.course-info { font-size: 24px; color: #374151; margin: 30px 0; }
+			.details { display: flex; justify-content: space-between; margin-top: 60px; font-size: 16px; color: #666; }
+			.seal { position: absolute; top: 40px; right: 40px; width: 80px; height: 80px; background: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; }
+			@media print { body { background: white; } .certificate { box-shadow: none; } }
+		`;
+		head.appendChild(style);
+		
+		// Create certificate content
+		const certificateDiv = document.createElement('div');
+		certificateDiv.className = 'certificate';
+		
+		certificateDiv.innerHTML = `
+			<div class="seal">CERTIFIED</div>
+			<div class="header">
+				<div style="font-size: 20px; font-weight: bold;">NAIJALINGUA</div>
+				<div style="font-size: 14px;">Nigerian Languages Learning Platform</div>
+			</div>
+			<div class="title">Certificate of Completion</div>
+			<div class="subtitle">This is to certify that</div>
+			<div class="student-name">${certData.studentName}</div>
+			<div style="font-size: 20px; margin: 20px 0;">has successfully completed the course</div>
+			<div class="course-info">
+				<strong>${certData.courseName}</strong><br>
+				<span style="font-size: 18px; color: #666;">${certData.language} Language Course</span>
+			</div>
+			<div style="font-size: 18px; margin: 30px 0;">
+				with a score of <strong style="color: #22c55e;">${certData.score}%</strong>
+			</div>
+			<div class="details">
+				<div>
+					<strong>Date Issued:</strong><br>
+					${formattedDate}
 				</div>
-				
-				<script>
-					window.onload = function() {
-						window.print();
-					}
-				</script>
-			</body>
-			</html>
+				<div>
+					<strong>Instructor:</strong><br>
+					${certData.instructor}
+				</div>
+				<div>
+					<strong>Certificate ID:</strong><br>
+					NL-CERT123
+				</div>
+			</div>
 		`;
 		
-		certificateWindow.document.write(certificateHTML);
+		body.appendChild(certificateDiv);
+		
+		// Add print script
+		const script = document.createElement('script');
+		script.textContent = 'window.onload = function() { window.print(); }';
+		body.appendChild(script);
+		
+		html.appendChild(head);
+		html.appendChild(body);
+		
+		// Write to new window
+		certificateWindow.document.write('<!DOCTYPE html>' + html.outerHTML);
 		certificateWindow.document.close();
 	}
 </script>

@@ -2,7 +2,7 @@
 	import { Search, Filter, Users, BookOpen, Star, Play, Plus } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { toastStore } from '$lib/stores/toast';
+	import { toasts } from '$lib/stores/toast';
 	import type { PageData } from './$types';
 	
 	export let data: PageData;
@@ -47,16 +47,25 @@
 			const result = await response.json();
 
 			if (response.ok) {
-				toastStore.addToast(result.message, 'success');
+				toasts.add({
+					message: result.message,
+					type: 'success'
+				});
 				// Redirect to dashboard after successful enrollment
 				setTimeout(() => {
 					goto('/dashboard/courses');
 				}, 1500);
 			} else {
-				toastStore.addToast(result.error || 'Failed to enroll', 'error');
+				toasts.add({
+					message: result.error || 'Failed to enroll',
+					type: 'error'
+				});
 			}
 		} catch (error) {
-			toastStore.addToast('Network error. Please try again.', 'error');
+			toasts.add({
+				message: 'Network error. Please try again.',
+				type: 'error'
+			});
 		} finally {
 			enrollingCourse = null;
 		}
