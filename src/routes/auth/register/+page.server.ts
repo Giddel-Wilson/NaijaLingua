@@ -61,9 +61,12 @@ export const actions: Actions = {
 			console.log('No existing user, proceeding with registration');
 			
 			// Hash password
+			console.log('Hashing password...');
 			const passwordHash = await hashPassword(validation.data.password);
+			console.log('Password hashed successfully');
 			
 			// Create user
+			console.log('Creating user in database...');
 			const user = await db.user.create({
 				data: {
 					name: validation.data.name,
@@ -75,11 +78,15 @@ export const actions: Actions = {
 			
 			console.log('User created successfully:', user.email);
 			
-			// Return success message instead of redirecting
-			return {
+			// Clear the form data and return success
+			const successResponse = {
 				success: true,
-				message: 'Account created successfully! Redirecting to login page...'
+				message: 'Account created successfully! Redirecting to login page...',
+				name: '',
+				email: ''
 			};
+			console.log('Returning success response:', successResponse);
+			return successResponse;
 			
 		} catch (error) {
 			console.error('Registration error:', error);

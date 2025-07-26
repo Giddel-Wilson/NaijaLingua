@@ -23,11 +23,14 @@
 	
 	// Initialize form data from server response
 	$effect(() => {
+		console.log('Form data received:', form);
+		
 		if (form?.name) formData.name = form.name;
 		if (form?.email) formData.email = form.email;
 		
 		// Handle successful registration
 		if (form?.success) {
+			console.log('Success detected, starting redirect process');
 			isRedirecting = true;
 			countdown = 5;
 			
@@ -105,7 +108,7 @@
 				
 				{#if form?.success}
 					<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-						{form.success}
+						{form.message || 'Account created successfully!'}
 					</div>
 				{/if}
 				

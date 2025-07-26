@@ -27,7 +27,7 @@
 		{ href: '/dashboard/settings', label: 'Settings', icon: Settings }
 	];
 	
-	const tutorNavItems = [
+	const instructorNavItems = [
 		{ href: '/dashboard', label: 'Overview', icon: Home },
 		{ href: '/dashboard/courses', label: 'My Courses', icon: BookOpen },
 		{ href: '/dashboard/create-course', label: 'Create Course', icon: PlusCircle },
@@ -37,7 +37,7 @@
 		{ href: '/dashboard/settings', label: 'Settings', icon: Settings }
 	];
 	
-	const navItems = $derived(data.user.role === 'TUTOR' || data.user.role === 'ADMIN' ? tutorNavItems : studentNavItems);
+	const navItems = $derived(data.user.role === 'INSTRUCTOR' || data.user.role === 'ADMIN' ? instructorNavItems : studentNavItems);
 </script>
 
 <div class="min-h-screen bg-gray-50">

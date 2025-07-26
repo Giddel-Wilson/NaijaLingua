@@ -7,7 +7,8 @@
 		ArrowRight,
 		Play,
 		CheckCircle,
-		Settings
+		Settings,
+		PlusCircle
 	} from 'lucide-svelte';
 	import { formatLanguage, formatLevel, formatProgress, formatDate } from '$lib/utils';
 	import type { PageData } from './$types';
@@ -94,6 +95,43 @@
 			</div>
 		</div>
 	</div>
+	
+	<!-- Instructor/Admin Create Course Section -->
+	{#if data.user.role === 'INSTRUCTOR' || data.user.role === 'ADMIN'}
+		<div class="mb-10">
+			<div class="bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl p-8 text-white">
+				<div class="flex items-center justify-between">
+					<div>
+						<h2 class="text-2xl font-bold mb-2">Create African Language Course</h2>
+						<p class="text-emerald-100 mb-4">
+							Build engaging courses with AI-powered content from authentic African language datasets
+						</p>
+						<div class="flex items-center gap-4 text-sm">
+							<div class="flex items-center gap-2">
+								<div class="w-2 h-2 bg-white rounded-full"></div>
+								<span>MAVEN + Igbo API</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<div class="w-2 h-2 bg-white rounded-full"></div>
+								<span>CommonVoice Audio</span>
+							</div>
+							<div class="flex items-center gap-2">
+								<div class="w-2 h-2 bg-white rounded-full"></div>
+								<span>Lanfrica Datasets</span>
+							</div>
+						</div>
+					</div>
+					<div class="text-right">
+						<a href="/dashboard/create-course" 
+						   class="inline-flex items-center gap-2 bg-white text-emerald-600 px-6 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors">
+							<PlusCircle class="w-5 h-5" />
+							Create Course
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 	
 	<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
 		<!-- Continue Learning -->
