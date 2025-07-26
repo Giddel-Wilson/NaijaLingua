@@ -96,6 +96,15 @@
               Courses
             </a>
 
+            <!-- Content Generation -->
+            <a 
+              href="/admin/content-generation" 
+              class="group flex items-center px-2 py-2 text-sm font-medium rounded-md {currentPath.startsWith('/admin/content-generation') ? 'bg-red-100 text-red-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}"
+            >
+              <FileText class="mr-3 w-5 h-5 {currentPath.startsWith('/admin/content-generation') ? 'text-red-500' : 'text-gray-400 group-hover:text-gray-500'}" />
+              Content Generation
+            </a>
+
             <!-- Enrollments -->
             <a 
               href="/admin/enrollments" 

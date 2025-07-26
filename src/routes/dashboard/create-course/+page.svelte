@@ -13,6 +13,7 @@
 		Star,
 		Zap
 	} from 'lucide-svelte';
+	import LessonPreview from '$lib/components/LessonPreview.svelte';
 	import type { PageData, ActionData } from './$types';
 	
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -322,40 +323,87 @@
 			{/if}
 		</div>
 		
-		<!-- Preview Generated Content -->
+		<!-- Enhanced Preview Generated Content -->
 		{#if showPreview && previewContent?.lessons}
 			<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-				<h3 class="text-lg font-semibold text-gray-900 mb-4">
-					📚 Generated Content Preview
-				</h3>
-				<p class="text-sm text-gray-600 mb-4">
-					Content generated from <strong>{formatLanguageName(selectedLanguage)}</strong> 
-					datasets for <strong>{selectedTopic}</strong> at <strong>{selectedLevel.toLowerCase()}</strong> level
-				</p>
-				
-				<div class="space-y-3">
-					{#each previewContent.lessons as lesson, index}
-						<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-							<div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
-								{index + 1}
-							</div>
-							<div class="flex-1">
-								<h4 class="font-medium text-gray-900">{lesson.title}</h4>
-								<p class="text-sm text-gray-600">{lesson.description}</p>
-								{#if lesson.content.words?.length}
-									<div class="text-xs text-gray-500 mt-1">
-										{lesson.content.words.length} vocabulary items
-									</div>
-								{/if}
-								{#if lesson.content.exercises?.length}
-									<div class="text-xs text-gray-500 mt-1">
-										{lesson.content.exercises.length} interactive exercises
-									</div>
-								{/if}
-							</div>
-							<Star class="w-5 h-5 text-yellow-500" />
+				<div class="flex items-center justify-between mb-6">
+					<div>
+						<h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+							🌍 Generated African Language Content
+						</h3>
+						<p class="text-sm text-gray-600 mt-1">
+							Content from <strong>{formatLanguageName(selectedLanguage)}</strong> 
+							datasets • <strong>{selectedTopic}</strong> topic • <strong>{selectedLevel.toLowerCase()}</strong> level
+						</p>
+					</div>
+					<div class="text-right">
+						<div class="text-lg font-bold text-emerald-600">
+							{previewContent.lessons.length} Lessons
 						</div>
+						<div class="text-xs text-gray-500">
+							{previewContent.metadata?.vocabularyCount || 0} vocabulary items
+						</div>
+					</div>
+				</div>
+				
+				<!-- API Sources Banner -->
+				<div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4 mb-6">
+					<div class="flex items-center justify-center gap-6 text-sm">
+						<div class="flex items-center gap-2 text-blue-700">
+							<Database class="w-4 h-4" />
+							<span>MAVEN API</span>
+						</div>
+						<div class="flex items-center gap-2 text-green-700">
+							<Globe class="w-4 h-4" />
+							<span>Igbo API</span>
+						</div>
+						<div class="flex items-center gap-2 text-purple-700">
+							<Mic class="w-4 h-4" />
+							<span>CommonVoice</span>
+						</div>
+						<div class="flex items-center gap-2 text-orange-700">
+							<Brain class="w-4 h-4" />
+							<span>Lanfrica</span>
+						</div>
+					</div>
+				</div>
+				
+				<!-- Lessons Preview -->
+				<div class="space-y-4">
+					{#each previewContent.lessons as lesson, index}
+						<LessonPreview {lesson} {index} />
 					{/each}
+				</div>
+				
+				<!-- Content Summary -->
+				<div class="mt-6 p-4 bg-gray-50 rounded-lg">
+					<h4 class="font-semibold text-gray-900 mb-2">Content Summary</h4>
+					<div class="grid md:grid-cols-4 gap-4 text-sm">
+						<div class="text-center">
+							<div class="font-bold text-blue-600 text-lg">
+								{previewContent.metadata?.vocabularyCount || 0}
+							</div>
+							<div class="text-gray-600">Vocabulary Items</div>
+						</div>
+						<div class="text-center">
+							<div class="font-bold text-green-600 text-lg">
+								{previewContent.metadata?.phrasesCount || 0}
+							</div>
+							<div class="text-gray-600">Common Phrases</div>
+						</div>
+						<div class="text-center">
+							<div class="font-bold text-purple-600 text-lg">
+								{previewContent.lessons.reduce((sum, lesson) => sum + (lesson.content.exercises?.length || 0), 0)}
+							</div>
+							<div class="text-gray-600">Exercises</div>
+						</div>
+						<div class="text-center">
+							<div class="font-bold text-orange-600 text-lg">
+								{previewContent.metadata?.audioClipsCount || 0}
+							</div>
+							<div class="text-gray-600">Audio Clips</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		{/if}		<!-- Submit Button -->

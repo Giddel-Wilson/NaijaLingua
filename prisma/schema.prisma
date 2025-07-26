@@ -62,6 +62,10 @@ model Lesson {
   duration    Int?     // duration in minutes
   order       Int
   isPublished Boolean  @default(false)
+  contentSource String? // MAVEN, IGBO_API, LANFRICA, COMMONVOICE
+  vocabulary  Json?    // African language vocabulary from APIs
+  culturalNotes String? // Cultural context for the lesson
+  audioData   Json?    // CommonVoice audio clips
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -122,7 +126,7 @@ model Enrollment {
   courseId     String
   progress     Float    @default(0)
   score        Float?
-  totalScore   Float    @default(0)
+  totalScore   Float?   @default(0)
   lessonsCompleted Int  @default(0)
   quizzesCompleted Int  @default(0)
   isCompleted  Boolean  @default(false)
@@ -148,9 +152,44 @@ model Certificate {
   @@map("certificates")
 }
 
+model Vocabulary {
+  id          String   @id @default(cuid())
+  language    Language
+  word        String
+  translation String
+  pronunciation String?
+  audioUrl    String?
+  example     String?
+  exampleTranslation String?
+  category    String?
+  source      String   // MAVEN, IGBO_API, LANFRICA
+  sourceData  Json?    // Original API response data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([language, word])
+  @@map("vocabulary")
+}
+
+model CulturalContent {
+  id          String   @id @default(cuid())
+  language    Language
+  topic       String
+  title       String
+  content     String
+  imageUrl    String?
+  videoUrl    String?
+  source      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("cultural_content")
+}
+
 enum Role {
   STUDENT
   INSTRUCTOR
+  TUTOR
   ADMIN
 }
 
@@ -166,6 +205,15 @@ enum Language {
   EDO
   IJAW
   PIDGIN
+  SWAHILI
+  AMHARIC
+  WOLOF
+  AKAN
+  ZULU
+  XHOSA
+  AFRIKAANS
+  SOMALI
+  OROMO
 }
 
 enum Level {

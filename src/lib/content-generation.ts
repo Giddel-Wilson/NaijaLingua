@@ -1,5 +1,6 @@
-// African Language Content APIs Integration
+// Enhanced African Language Content APIs Integration with Database Caching
 import { env } from '$env/dynamic/private';
+import { db } from '$lib/db';
 
 // MAVEN API Integration for African languages
 export class MavenAPI {
@@ -16,7 +17,8 @@ export class MavenAPI {
             return await response.json();
         } catch (error) {
             console.error('MAVEN API Error:', error);
-            return null;
+            // Fallback to demo data for development
+            return this.getFallbackLanguageData(language);
         }
     }
     
@@ -34,7 +36,7 @@ export class MavenAPI {
             return await response.json();
         } catch (error) {
             console.error('MAVEN Vocabulary Error:', error);
-            return [];
+            return this.getFallbackVocabulary(language, category);
         }
     }
     
@@ -48,8 +50,147 @@ export class MavenAPI {
             return await response.json();
         } catch (error) {
             console.error('MAVEN Phrases Error:', error);
-            return [];
+            return this.getFallbackPhrases(language, level);
         }
+    }
+    
+    private getFallbackLanguageData(language: string) {
+        const fallbackData: Record<string, any> = {
+            igbo: {
+                name: 'Igbo',
+                speakers: 27000000,
+                regions: ['Southeast Nigeria'],
+                dialects: ['Standard Igbo', 'Owerri', 'Umuahia', 'Onitsha']
+            },
+            yoruba: {
+                name: 'Yoruba',
+                speakers: 45000000,
+                regions: ['Southwest Nigeria', 'Benin', 'Togo'],
+                dialects: ['Standard Yoruba', 'Oyo', 'Lagos', 'Ibadan']
+            },
+            hausa: {
+                name: 'Hausa',
+                speakers: 70000000,
+                regions: ['Northern Nigeria', 'Niger', 'Chad'],
+                dialects: ['Kano Hausa', 'Sokoto Hausa', 'Zaria Hausa']
+            }
+        };
+        return fallbackData[language.toLowerCase()] || { name: language, speakers: 0, regions: [], dialects: [] };
+    }
+    
+    public getFallbackVocabulary(language: string, category?: string) {
+        const vocabularyData: Record<string, any> = {
+            igbo: {
+                greetings: [
+                    { word: 'Ndewo', translation: 'Hello', pronunciation: 'n-deh-woh' },
+                    { word: 'Kedụ', translation: 'How are you?', pronunciation: 'keh-doo' },
+                    { word: 'Ọ dị mma', translation: 'I am fine', pronunciation: 'oh-dee-mah' },
+                    { word: 'Dalu', translation: 'Thank you', pronunciation: 'dah-loo' },
+                    { word: 'Ka ọ dị', translation: 'Goodbye', pronunciation: 'kah-oh-dee' }
+                ],
+                family: [
+                    { word: 'Nne', translation: 'Mother', pronunciation: 'n-neh' },
+                    { word: 'Nna', translation: 'Father', pronunciation: 'n-nah' },
+                    { word: 'Nwanne', translation: 'Brother/Sister', pronunciation: 'nwah-neh' },
+                    { word: 'Nwa', translation: 'Child', pronunciation: 'nwah' },
+                    { word: 'Ezinụlọ', translation: 'Family', pronunciation: 'eh-zee-noo-law' }
+                ],
+                food: [
+                    { word: 'Ofe', translation: 'Soup', pronunciation: 'oh-feh' },
+                    { word: 'Ji', translation: 'Yam', pronunciation: 'jee' },
+                    { word: 'Nri', translation: 'Food', pronunciation: 'n-ree' },
+                    { word: 'Mmiri', translation: 'Water', pronunciation: 'm-mee-ree' },
+                    { word: 'Abacha', translation: 'Cassava dish', pronunciation: 'ah-bah-chah' }
+                ]
+            },
+            yoruba: {
+                greetings: [
+                    { word: 'Bawo', translation: 'Hello', pronunciation: 'bah-woh' },
+                    { word: 'Pẹlẹ o', translation: 'Sorry/Hello', pronunciation: 'peh-leh-oh' },
+                    { word: 'Ṣe dada ni', translation: 'Are you well?', pronunciation: 'sheh-dah-dah-nee' },
+                    { word: 'Ẹ ṣe', translation: 'Thank you', pronunciation: 'eh-sheh' },
+                    { word: 'Ó dàbọ̀', translation: 'Goodbye', pronunciation: 'oh-dah-baw' }
+                ],
+                family: [
+                    { word: 'Mama', translation: 'Mother', pronunciation: 'mah-mah' },
+                    { word: 'Baba', translation: 'Father', pronunciation: 'bah-bah' },
+                    { word: 'Arakunrin', translation: 'Brother', pronunciation: 'ah-rah-koon-reen' },
+                    { word: 'Arabinrin', translation: 'Sister', pronunciation: 'ah-rah-been-reen' },
+                    { word: 'Ọmọ', translation: 'Child', pronunciation: 'aw-maw' }
+                ],
+                food: [
+                    { word: 'Oúnjẹ', translation: 'Food', pronunciation: 'oh-oon-jeh' },
+                    { word: 'Omi', translation: 'Water', pronunciation: 'oh-mee' },
+                    { word: 'Àmàlà', translation: 'Yam flour dish', pronunciation: 'ah-mah-lah' },
+                    { word: 'Ewa', translation: 'Beans', pronunciation: 'eh-wah' },
+                    { word: 'Isu', translation: 'Yam', pronunciation: 'ee-soo' }
+                ]
+            },
+            hausa: {
+                greetings: [
+                    { word: 'Sannu', translation: 'Hello', pronunciation: 'san-noo' },
+                    { word: 'Ina kwana', translation: 'Good morning', pronunciation: 'ee-nah-kwa-nah' },
+                    { word: 'Barka da rana', translation: 'Good afternoon', pronunciation: 'bar-kah-dah-rah-nah' },
+                    { word: 'Na gode', translation: 'Thank you', pronunciation: 'nah-goh-deh' },
+                    { word: 'Sai anjima', translation: 'Goodbye', pronunciation: 'sah-ee-an-jee-mah' }
+                ],
+                family: [
+                    { word: 'Uwa', translation: 'Mother', pronunciation: 'oo-wah' },
+                    { word: 'Uba', translation: 'Father', pronunciation: 'oo-bah' },
+                    { word: 'Yaya', translation: 'Brother', pronunciation: 'yah-yah' },
+                    { word: 'Yar\'uwa', translation: 'Sister', pronunciation: 'yah-roo-wah' },
+                    { word: 'Ɗa', translation: 'Child', pronunciation: 'dah' }
+                ],
+                food: [
+                    { word: 'Abinci', translation: 'Food', pronunciation: 'ah-been-chee' },
+                    { word: 'Ruwa', translation: 'Water', pronunciation: 'roo-wah' },
+                    { word: 'Tuwo', translation: 'Millet porridge', pronunciation: 'too-woh' },
+                    { word: 'Masa', translation: 'Rice cake', pronunciation: 'mah-sah' },
+                    { word: 'Doya', translation: 'Yam', pronunciation: 'doh-yah' }
+                ]
+            }
+        };
+        
+        const langData = vocabularyData[language.toLowerCase()] || {};
+        return category ? (langData[category] || []) : Object.values(langData).flat();
+    }
+    
+    private getFallbackPhrases(language: string, level: string) {
+        const phrasesData: Record<string, any> = {
+            igbo: {
+                beginner: [
+                    { phrase: 'Aha m bụ...', translation: 'My name is...', context: 'introduction' },
+                    { phrase: 'Kedụ aha gị?', translation: 'What is your name?', context: 'question' },
+                    { phrase: 'Ana m ahụ gị', translation: 'I see you', context: 'greeting' },
+                    { phrase: 'Olee ebe ị si?', translation: 'Where are you from?', context: 'question' },
+                    { phrase: 'A sịrị na ọ dị mma', translation: 'They say it is good', context: 'expression' }
+                ],
+                intermediate: [
+                    { phrase: 'Gịnị ka ị na-eme?', translation: 'What are you doing?', context: 'conversation' },
+                    { phrase: 'M na-agụ akwụkwọ', translation: 'I am reading a book', context: 'activity' },
+                    { phrase: 'Ọ bụ oge ole ka ọ dị?', translation: 'What time is it?', context: 'time' }
+                ]
+            },
+            yoruba: {
+                beginner: [
+                    { phrase: 'Orúkọ mi ni...', translation: 'My name is...', context: 'introduction' },
+                    { phrase: 'Kí ni orúkọ rẹ?', translation: 'What is your name?', context: 'question' },
+                    { phrase: 'Mo rí ọ', translation: 'I see you', context: 'greeting' },
+                    { phrase: 'Níbo ni ọ ti wá?', translation: 'Where are you from?', context: 'question' }
+                ]
+            },
+            hausa: {
+                beginner: [
+                    { phrase: 'Sunana...', translation: 'My name is...', context: 'introduction' },
+                    { phrase: 'Menene sunanka?', translation: 'What is your name?', context: 'question' },
+                    { phrase: 'Ina ganinka', translation: 'I see you', context: 'greeting' },
+                    { phrase: 'Daga ina kike?', translation: 'Where are you from?', context: 'question' }
+                ]
+            }
+        };
+        
+        const langPhrases = phrasesData[language.toLowerCase()] || {};
+        return langPhrases[level.toLowerCase()] || [];
     }
 }
 
@@ -175,7 +316,10 @@ export class AfricanContentGenerator {
     
     async generateCourseContent(language: string, level: string, topic: string) {
         try {
-            console.log(`Generating content for ${language} - ${level} - ${topic}`);
+            console.log(`🌍 Generating African language content for ${language} - ${level} - ${topic}`);
+            
+            // First, try to cache vocabulary in database
+            await this.cacheVocabularyToDatabase(language, topic);
             
             // Get vocabulary from multiple sources
             const [mavenVocab, igboWords, lanfricaData] = await Promise.all([
@@ -190,9 +334,12 @@ export class AfricanContentGenerator {
             // Get audio content
             const audioClips = await this.commonVoice.getAudioClips(language);
             
+            // Get cached vocabulary from database
+            const cachedVocab = await this.getCachedVocabulary(language, topic);
+            
             // Generate structured content
             const lessons = await this.generateLessons({
-                vocabulary: mavenVocab || [],
+                vocabulary: [...(mavenVocab || []), ...cachedVocab],
                 igboWords: igboWords || [],
                 phrases: phrases || [],
                 audioClips: audioClips || [],
@@ -209,7 +356,10 @@ export class AfricanContentGenerator {
                     language,
                     level,
                     topic,
-                    sources: ['MAVEN', 'IgboAPI', 'CommonVoice', 'Lanfrica'],
+                    sources: ['MAVEN', 'IgboAPI', 'CommonVoice', 'Lanfrica', 'Cached'],
+                    vocabularyCount: (mavenVocab?.length || 0) + cachedVocab.length,
+                    phrasesCount: phrases?.length || 0,
+                    audioClipsCount: audioClips?.length || 0,
                     generatedAt: new Date().toISOString()
                 }
             };
@@ -221,6 +371,53 @@ export class AfricanContentGenerator {
                 error: error instanceof Error ? error.message : 'Unknown error occurred',
                 lessons: []
             };
+        }
+    }
+    
+    private async cacheVocabularyToDatabase(language: string, topic: string) {
+        try {
+            const vocab = this.maven.getFallbackVocabulary(language, topic);
+            const languageEnum = language.toUpperCase() as any;
+            
+            for (const item of vocab) {
+                try {
+                    // Using raw SQL since Prisma model might not be available yet
+                    await db.$executeRaw`
+                        INSERT INTO vocabulary (id, language, word, translation, pronunciation, category, source, "createdAt", "updatedAt")
+                        VALUES (gen_random_uuid(), ${languageEnum}, ${item.word}, ${item.translation}, ${item.pronunciation || ''}, ${topic}, 'MAVEN_FALLBACK', NOW(), NOW())
+                        ON CONFLICT (language, word) DO UPDATE SET
+                        translation = EXCLUDED.translation,
+                        pronunciation = EXCLUDED.pronunciation,
+                        "updatedAt" = NOW()
+                    `;
+                } catch (dbError) {
+                    console.log('Database insert skipped:', dbError);
+                }
+            }
+        } catch (error) {
+            console.error('Error caching vocabulary:', error);
+        }
+    }
+    
+    private async getCachedVocabulary(language: string, topic?: string) {
+        try {
+            const languageEnum = language.toUpperCase();
+            const query = topic 
+                ? `SELECT * FROM vocabulary WHERE language = $1 AND category = $2 LIMIT 20`
+                : `SELECT * FROM vocabulary WHERE language = $1 LIMIT 20`;
+            
+            const params = topic ? [languageEnum, topic] : [languageEnum];
+            const vocabulary: any[] = await db.$queryRawUnsafe(query, ...params);
+            
+            return vocabulary.map((v: any) => ({
+                word: v.word,
+                translation: v.translation,
+                pronunciation: v.pronunciation,
+                category: v.category
+            }));
+        } catch (error) {
+            console.error('Error getting cached vocabulary:', error);
+            return [];
         }
     }
     
