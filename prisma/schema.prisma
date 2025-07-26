@@ -122,7 +122,7 @@ model Enrollment {
   courseId     String
   progress     Float    @default(0)
   score        Float?
-  totalScore   Float    @default(0)
+  totalScore   Float?   @default(0)
   lessonsCompleted Int  @default(0)
   quizzesCompleted Int  @default(0)
   isCompleted  Boolean  @default(false)
@@ -151,6 +151,7 @@ model Certificate {
 enum Role {
   STUDENT
   INSTRUCTOR
+  TUTOR
   ADMIN
 }
 

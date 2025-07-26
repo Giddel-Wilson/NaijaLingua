@@ -42,8 +42,11 @@ export const actions: Actions = {
 	updateProfile: async ({ request, locals }) => {
 		const user = locals.user;
 		if (!user) {
+			console.error('Profile update failed: No user in locals');
 			return fail(401, { message: 'Unauthorized' });
 		}
+
+		console.log('Profile update request from user:', user.id, user.email);
 
 		const data = await request.formData();
 		const name = data.get('name') as string;
@@ -51,21 +54,39 @@ export const actions: Actions = {
 		const bio = data.get('bio') as string;
 		const profileImage = data.get('profileImage') as string;
 
+		console.log('Profile update data:', { name, email, bio, profileImage: profileImage ? 'present' : 'not present' });
+
+		// Validate required fields
+		if (!name || !email) {
+			console.error('Profile update failed: Missing required fields', { name: !!name, email: !!email });
+			return fail(400, { message: 'Name and email are required' });
+		}
+
 		try {
-			await db.user.update({
+			console.log('Attempting to update user profile in database...');
+			
+			const updatedUser = await db.user.update({
 				where: { id: user.id },
 				data: {
-					name: name || user.name,
-					email: email || user.email,
-					bio: bio,
-					profileImage: profileImage
+					name: name,
+					email: email,
+					bio: bio || null,
+					profileImage: profileImage || null
 				}
 			});
 
+			console.log('Profile updated successfully:', updatedUser.email);
 			return { success: true, message: 'Profile updated successfully!' };
 		} catch (error) {
 			console.error('Profile update error:', error);
-			return fail(500, { message: 'Failed to update profile' });
+			
+			// Check if it's a unique constraint error (duplicate email)
+			if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+				console.error('Duplicate email error');
+				return fail(400, { message: 'Email address is already in use' });
+			}
+			
+			return fail(500, { message: 'Failed to update profile. Please try again.' });
 		}
 	},
 

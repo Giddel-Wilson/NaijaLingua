@@ -77,7 +77,7 @@ export const load: PageServerLoad = async ({ cookies, params }) => {
 		const studentsWithProgress = enrollments.map(enrollment => ({
 			...enrollment,
 			progressPercentage: totalLessons > 0 ? Math.round((enrollment.lessonsCompleted / totalLessons) * 100) : 0,
-			averageScore: enrollment.totalScore > 0 ? Math.round(enrollment.score || 0) : 0
+			averageScore: enrollment.totalScore && enrollment.totalScore > 0 ? Math.round(enrollment.totalScore) : 0
 		}));
 
 		return {
