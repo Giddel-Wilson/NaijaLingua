@@ -1,28 +1,23 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { jwt } from '$lib/auth';
+import { verifyToken } from '$lib/auth';
 import { db } from '$lib/db';
 
-export const load: PageServerLoad = async ({ cookies }) => {
-    const token = cookies.get('auth_token');
-    if (!token) {
+export const load: PageServerLoad = async ({ locals }) => {
+    if (!locals.user) {
         throw redirect(302, '/auth/login');
     }
     
+    if (locals.user.role !== 'INSTRUCTOR' && locals.user.role !== 'ADMIN') {
+        throw redirect(302, '/dashboard');
+    }
+    
     try {
-        const decoded = jwt.verify(token) as any;
-        const user = await db.user.findUnique({
-            where: { id: decoded.userId }
-        });
-        
-        if (!user || (user.role !== 'INSTRUCTOR' && user.role !== 'ADMIN')) {
-            throw redirect(302, '/dashboard');
-        }
         
         // Get instructor's courses with enrollment stats
         const courses = await db.course.findMany({
             where: {
-                createdById: decoded.userId
+                createdById: locals.user.id
             },
             include: {
                 enrollments: {
@@ -115,7 +110,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
         });
         
         return {
-            user,
+            user: locals.user,
             courses: studentProgress,
             analytics: {
                 totalCourses: courses.length,

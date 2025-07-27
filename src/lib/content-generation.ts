@@ -322,17 +322,28 @@ export class AfricanContentGenerator {
             await this.cacheVocabularyToDatabase(language, topic);
             
             // Get vocabulary from multiple sources
-            const [mavenVocab, igboWords, lanfricaData] = await Promise.all([
-                this.maven.getVocabulary(language, topic),
-                language.toLowerCase() === 'igbo' ? this.igbo.getWords(topic) : Promise.resolve([]),
-                this.lanfrica.getDatasets(language)
+            const [mavenVocabRaw, igboWordsRaw, lanfricaDataRaw] = await Promise.all([
+                this.maven.getVocabulary(language, topic).catch(() => []),
+                language.toLowerCase() === 'igbo' ? this.igbo.getWords(topic).catch(() => []) : Promise.resolve([]),
+                this.lanfrica.getDatasets(language).catch(() => [])
             ]);
+            const mavenVocab = Array.isArray(mavenVocabRaw) ? mavenVocabRaw : [];
+            const igboWords = Array.isArray(igboWordsRaw) ? igboWordsRaw : [];
+            const lanfricaData = Array.isArray(lanfricaDataRaw) ? lanfricaDataRaw : [];
             
             // Get phrases and examples
-            const phrases = await this.maven.getPhrases(language, level);
-            
+            let phrases = [];
+            try {
+                const result = await this.maven.getPhrases(language, level);
+                phrases = Array.isArray(result) ? result : [];
+            } catch { phrases = []; }
+
             // Get audio content
-            const audioClips = await this.commonVoice.getAudioClips(language);
+            let audioClips = [];
+            try {
+                const result = await this.commonVoice.getAudioClips(language);
+                audioClips = Array.isArray(result) ? result : [];
+            } catch { audioClips = []; }
             
             // Get cached vocabulary from database
             const cachedVocab = await this.getCachedVocabulary(language, topic);
@@ -377,19 +388,22 @@ export class AfricanContentGenerator {
     private async cacheVocabularyToDatabase(language: string, topic: string) {
         try {
             const vocab = this.maven.getFallbackVocabulary(language, topic);
-            const languageEnum = language.toUpperCase() as any;
-            
+            const languageEnum = language.toUpperCase();
             for (const item of vocab) {
                 try {
-                    // Using raw SQL since Prisma model might not be available yet
-                    await db.$executeRaw`
-                        INSERT INTO vocabulary (id, language, word, translation, pronunciation, category, source, "createdAt", "updatedAt")
-                        VALUES (gen_random_uuid(), ${languageEnum}, ${item.word}, ${item.translation}, ${item.pronunciation || ''}, ${topic}, 'MAVEN_FALLBACK', NOW(), NOW())
+                    await db.$executeRawUnsafe(
+                        `INSERT INTO vocabulary (id, language, word, translation, pronunciation, category, source, "createdAt", "updatedAt")
+                        VALUES (gen_random_uuid(), $1::"Language", $2, $3, $4, $5, 'MAVEN_FALLBACK', NOW(), NOW())
                         ON CONFLICT (language, word) DO UPDATE SET
                         translation = EXCLUDED.translation,
                         pronunciation = EXCLUDED.pronunciation,
-                        "updatedAt" = NOW()
-                    `;
+                        "updatedAt" = NOW()`,
+                        languageEnum,
+                        item.word,
+                        item.translation,
+                        item.pronunciation || '',
+                        topic
+                    );
                 } catch (dbError) {
                     console.log('Database insert skipped:', dbError);
                 }
@@ -403,9 +417,8 @@ export class AfricanContentGenerator {
         try {
             const languageEnum = language.toUpperCase();
             const query = topic 
-                ? `SELECT * FROM vocabulary WHERE language = $1 AND category = $2 LIMIT 20`
-                : `SELECT * FROM vocabulary WHERE language = $1 LIMIT 20`;
-            
+                ? `SELECT * FROM vocabulary WHERE language = $1::"Language" AND category = $2 LIMIT 20`
+                : `SELECT * FROM vocabulary WHERE language = $1::"Language" LIMIT 20`;
             const params = topic ? [languageEnum, topic] : [languageEnum];
             const vocabulary: any[] = await db.$queryRawUnsafe(query, ...params);
             

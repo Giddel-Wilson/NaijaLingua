@@ -36,7 +36,7 @@ model Course {
   price        Float         @default(0)
   currency     String        @default("USD")
   category     String?
-  tags         String[]      @default([])
+  tags         String        @default("")  // JSON string for SQLite compatibility
   isPublished  Boolean       @default(false)
   isApproved   Boolean       @default(false)
   createdById  String
