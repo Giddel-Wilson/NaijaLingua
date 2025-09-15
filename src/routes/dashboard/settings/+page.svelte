@@ -46,8 +46,8 @@
 				}
 			}, 100);
 
-			// Upload to Cloudinary API endpoint (using simple version for testing)
-			const response = await fetch('/api/upload/profile-image-simple', {
+			// Upload to Vercel Blob (much more reliable than Cloudinary!)
+			const response = await fetch('/api/upload/profile-image-blob', {
 				method: 'POST',
 				body: formData
 			});
