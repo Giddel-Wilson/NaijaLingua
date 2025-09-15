@@ -46,8 +46,8 @@
 				}
 			}, 100);
 
-			// Upload to our API endpoint (using local storage for now)
-			const response = await fetch('/api/upload/profile-image-local', {
+			// Upload to Cloudinary API endpoint
+			const response = await fetch('/api/upload/profile-image', {
 				method: 'POST',
 				body: formData
 			});
