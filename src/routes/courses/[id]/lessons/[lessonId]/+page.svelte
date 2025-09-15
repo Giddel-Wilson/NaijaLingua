@@ -255,50 +255,76 @@
 
 <style>
 	:global(.prose) {
-		@apply text-gray-900 leading-7;
+		color: var(--color-gray-900);
+		line-height: 1.75;
 	}
 	
 	:global(.prose h1) {
-		@apply text-2xl font-bold text-gray-900 mb-4;
+		font-size: 1.5rem;
+		font-weight: 700;
+		color: var(--color-gray-900);
+		margin-bottom: 1rem;
 	}
 	
 	:global(.prose h2) {
-		@apply text-xl font-semibold text-gray-900 mb-3 mt-6;
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: var(--color-gray-900);
+		margin-bottom: 0.75rem;
+		margin-top: 1.5rem;
 	}
 	
 	:global(.prose h3) {
-		@apply text-lg font-medium text-gray-900 mb-2 mt-4;
+		font-size: 1.125rem;
+		font-weight: 500;
+		color: var(--color-gray-900);
+		margin-bottom: 0.5rem;
+		margin-top: 1rem;
 	}
 	
 	:global(.prose p) {
-		@apply mb-4;
+		margin-bottom: 1rem;
 	}
 	
 	:global(.prose ul, .prose ol) {
-		@apply mb-4 pl-6;
+		margin-bottom: 1rem;
+		padding-left: 1.5rem;
 	}
 	
 	:global(.prose li) {
-		@apply mb-1;
+		margin-bottom: 0.25rem;
 	}
 	
 	:global(.prose strong) {
-		@apply font-semibold text-gray-900;
+		font-weight: 600;
+		color: var(--color-gray-900);
 	}
 	
 	:global(.prose em) {
-		@apply italic;
+		font-style: italic;
 	}
 	
 	:global(.prose code) {
-		@apply bg-gray-100 text-gray-900 px-1 py-0.5 rounded text-sm;
+		background-color: var(--color-gray-100);
+		color: var(--color-gray-900);
+		padding: 0.125rem 0.25rem;
+		border-radius: 0.25rem;
+		font-size: 0.875rem;
 	}
 	
 	:global(.prose pre) {
-		@apply bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+		background-color: var(--color-gray-100);
+		padding: 1rem;
+		border-radius: 0.5rem;
+		overflow-x: auto;
+		margin-bottom: 1rem;
 	}
 	
 	:global(.prose blockquote) {
-		@apply border-l-4 border-gray-300 pl-4 italic text-gray-700 mb-4;
+		border-left: 4px solid var(--color-gray-300);
+		padding-left: 1rem;
+		font-style: italic;
+		color: var(--color-gray-700);
+		margin-bottom: 1rem;
 	}
 </style>
