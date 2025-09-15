@@ -68,17 +68,23 @@ export async function uploadToCloudinary(
             duration: result.duration
         };
     } catch (error) {
-        console.error('Cloudinary upload error:', error);
-        console.error('Cloudinary config:', {
-            cloud_name: CLOUDINARY_CLOUD_NAME,
-            api_key: CLOUDINARY_API_KEY ? 'SET' : 'NOT SET',
-            api_secret: CLOUDINARY_API_SECRET ? 'SET' : 'NOT SET'
+        console.error('=== Cloudinary Upload Error ===');
+        console.error('Error:', error);
+        console.error('Error type:', typeof error);
+        console.error('Error constructor:', error?.constructor?.name);
+        console.error('Cloudinary config check:', {
+            cloud_name: CLOUDINARY_CLOUD_NAME || 'MISSING',
+            api_key: CLOUDINARY_API_KEY ? `${CLOUDINARY_API_KEY.slice(0, 4)}...` : 'MISSING',
+            api_secret: CLOUDINARY_API_SECRET ? `${CLOUDINARY_API_SECRET.slice(0, 4)}...` : 'MISSING'
         });
         
         if (error instanceof Error) {
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
             throw new Error(`Cloudinary upload failed: ${error.message}`);
         }
         
+        console.error('Unknown error type, stringified:', JSON.stringify(error));
         throw new Error('Failed to upload file to Cloudinary');
     }
 }
