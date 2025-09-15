@@ -46,8 +46,8 @@
 				}
 			}, 100);
 
-			// Upload to Cloudinary API endpoint
-			const response = await fetch('/api/upload/profile-image', {
+			// Upload to Cloudinary API endpoint (using simple version for testing)
+			const response = await fetch('/api/upload/profile-image-simple', {
 				method: 'POST',
 				body: formData
 			});
