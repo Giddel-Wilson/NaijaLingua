@@ -8,6 +8,56 @@
 	--color-neutral: #fef6f0;
 	--color-gold: #c5a76d;
 	
+	/* Gray color palette for compatibility */
+	--color-gray-50: #f9fafb;
+	--color-gray-100: #f3f4f6;
+	--color-gray-200: #e5e7eb;
+	--color-gray-300: #d1d5db;
+	--color-gray-400: #9ca3af;
+	--color-gray-500: #6b7280;
+	--color-gray-600: #4b5563;
+	--color-gray-700: #374151;
+	--color-gray-800: #1f2937;
+	--color-gray-900: #111827;
+	
+	/* Emerald color palette */
+	--color-emerald-50: #ecfdf5;
+	--color-emerald-100: #d1fae5;
+	--color-emerald-200: #a7f3d0;
+	--color-emerald-300: #6ee7b7;
+	--color-emerald-400: #34d399;
+	--color-emerald-500: #10b981;
+	--color-emerald-600: #059669;
+	--color-emerald-700: #047857;
+	--color-emerald-800: #065f46;
+	--color-emerald-900: #064e3b;
+	
+	/* Other common colors */
+	--color-white: #ffffff;
+	--color-black: #000000;
+	--color-red-50: #fef2f2;
+	--color-red-100: #fee2e2;
+	--color-red-500: #ef4444;
+	--color-red-600: #dc2626;
+	--color-red-700: #b91c1c;
+	--color-red-800: #991b1b;
+	--color-red-900: #7f1d1d;
+	--color-yellow-50: #fffbeb;
+	--color-yellow-100: #fef3c7;
+	--color-yellow-600: #d97706;
+	--color-yellow-700: #b45309;
+	--color-green-50: #f0fdf4;
+	--color-green-100: #dcfce7;
+	--color-green-500: #22c55e;
+	--color-green-600: #16a34a;
+	--color-green-700: #15803d;
+	--color-green-800: #166534;
+	--color-blue-50: #eff6ff;
+	--color-blue-600: #2563eb;
+	--color-blue-700: #1d4ed8;
+	--color-purple-50: #faf5ff;
+	--color-purple-700: #7c3aed;
+	
 	--font-family-serif: "DM Serif Display", serif;
 	--font-family-sans: "Inter", "Poppins", sans-serif;
 }
