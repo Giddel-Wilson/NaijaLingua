@@ -1,12 +1,6 @@
 {
-  "framework": "svelte",
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "installCommand": "npm install",
-  "devCommand": "npm run dev",
-  "env": {
-    "DATABASE_URL": "@database_url",
-    "JWT_SECRET": "@jwt_secret",
-    "AUTH_SECRET": "@auth_secret"
-  }
+  "devCommand": "npm run dev"
 }
