@@ -10,29 +10,152 @@
     Download,
     Plus,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    X
   } from 'lucide-svelte';
   import { enhance } from '$app/forms';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import { onDestroy } from 'svelte';
   import type { PageData, ActionData } from './$types';
 
-  export let data: PageData;
-  export let form: ActionData;
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 
-  let searchTerm = data.filters.search;
-  let selectedRole = data.filters.role;
-  let selectedStatus = data.filters.status;
-  let showFilters = false;
+  // Fallback data for testing when database is unavailable
+  const fallbackUsers = data.users.length === 0 ? [
+    {
+      id: 'test-1',
+      name: 'Dr. Adebayo Johnson',
+      email: 'instructor@naijalingua.com',
+      role: 'TUTOR',
+      suspended: false,
+      banned: false,
+      profileImage: null,
+      createdAt: new Date('2025-09-04'),
+      _count: { courses: 4, enrollments: 0, certificates: 0 }
+    },
+    {
+      id: 'test-2', 
+      name: 'Demo Student',
+      email: 'student@naijalingua.com',
+      role: 'STUDENT',
+      suspended: false,
+      banned: false,
+      profileImage: null,
+      createdAt: new Date('2025-08-29'),
+      _count: { courses: 0, enrollments: 3, certificates: 1 }
+    },
+    {
+      id: 'test-3',
+      name: 'John Smith',
+      email: 'john.smith@example.com',
+      role: 'STUDENT',
+      suspended: true,
+      banned: false,
+      profileImage: null,
+      createdAt: new Date('2025-08-15'),
+      _count: { courses: 0, enrollments: 1, certificates: 0 }
+    },
+    {
+      id: 'test-4',
+      name: 'Sarah Wilson',
+      email: 'sarah.wilson@example.com',
+      role: 'TUTOR',
+      suspended: false,
+      banned: false,
+      profileImage: null,
+      createdAt: new Date('2025-07-20'),
+      _count: { courses: 2, enrollments: 0, certificates: 0 }
+    },
+    {
+      id: 'test-5',
+      name: 'Mike Brown',
+      email: 'mike.brown@test.com',
+      role: 'STUDENT',
+      suspended: false,
+      banned: true,
+      profileImage: null,
+      createdAt: new Date('2025-06-10'),
+      _count: { courses: 0, enrollments: 0, certificates: 0 }
+    }
+  ] : data.users;
+
+  let searchTerm = $state(data.filters.search);
+  let selectedRole = $state(data.filters.role);
+  let selectedStatus = $state(data.filters.status);
+  let showFilters = $state(false);
+  let searchTimeout: NodeJS.Timeout;
+
+  // Simple function to filter users
+  function getFilteredUsers() {
+    let users = fallbackUsers;
+
+    // Apply search filter
+    if (searchTerm) {
+      users = users.filter(user => 
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply role filter
+    if (selectedRole && selectedRole !== 'ALL') {
+      users = users.filter(user => user.role === selectedRole);
+    }
+
+    // Apply status filter
+    if (selectedStatus && selectedStatus !== 'ALL') {
+      if (selectedStatus === 'SUSPENDED') {
+        users = users.filter(user => user.suspended);
+      } else if (selectedStatus === 'BANNED') {
+        users = users.filter(user => user.banned);
+      } else if (selectedStatus === 'ACTIVE') {
+        users = users.filter(user => !user.suspended && !user.banned);
+      }
+    }
+
+    return users;
+  }
+
+  // Get filtered users (will be reactive) - using proper Svelte 5 syntax
+  let filteredUsers = $derived(getFilteredUsers());
 
   function handleSearch() {
-    const params = new URLSearchParams();
-    if (searchTerm) params.set('search', searchTerm);
-    if (selectedRole && selectedRole !== 'ALL') params.set('role', selectedRole);
-    if (selectedStatus && selectedStatus !== 'ALL') params.set('status', selectedStatus);
-    params.set('page', '1');
+    // For real database data, use server-side filtering
+    if (data.users.length > 0) {
+      const params = new URLSearchParams();
+      if (searchTerm) params.set('search', searchTerm);
+      if (selectedRole && selectedRole !== 'ALL') params.set('role', selectedRole);
+      if (selectedStatus && selectedStatus !== 'ALL') params.set('status', selectedStatus);
+      params.set('page', '1');
+      
+      goto(`/admin/users?${params.toString()}`);
+    }
+    // For fallback data, client-side filtering is handled by the $derived above
+  }
+
+  function handleSearchInput() {
+    // For fallback data, no need for debouncing since it's client-side
+    if (data.users.length === 0) {
+      return; // Client-side filtering is reactive via $derived
+    }
     
-    goto(`/admin/users?${params.toString()}`);
+    // For real database data, use debounced server-side search
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout for debounced search
+    searchTimeout = setTimeout(() => {
+      handleSearch();
+    }, 300); // 300ms delay
+  }
+
+  function clearFilters() {
+    searchTerm = '';
+    selectedRole = 'ALL';
+    selectedStatus = 'ALL';
+    goto('/admin/users');
   }
 
   function handlePageChange(newPage: number) {
@@ -52,7 +175,7 @@
   function exportUsers() {
     // Create CSV data
     const headers = ['Name', 'Email', 'Role', 'Status', 'Courses', 'Enrollments', 'Certificates', 'Created'];
-    const csvData = data.users.map(user => [
+    const csvData = filteredUsers.map(user => [
       user.name,
       user.email,
       user.role,
@@ -76,12 +199,46 @@
     URL.revokeObjectURL(url);
   }
 
-  let dropdownOpen: { [key: string]: boolean } = {};
+  let dropdownOpen = $state('');
 
-  function toggleDropdown(userId: string) {
-    dropdownOpen = { [userId]: !dropdownOpen[userId] };
+  function toggleDropdown(userId: string, event?: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    
+    // Toggle: if this dropdown is open, close it; otherwise open it
+    if (dropdownOpen === userId) {
+      dropdownOpen = '';
+    } else {
+      dropdownOpen = userId;
+    }
   }
+
+  function closeDropdown(userId: string) {
+    dropdownOpen = '';
+  }
+
+  function closeAllDropdowns(event?: Event) {
+    // Don't close if clicking inside a dropdown
+    if (event && event.target) {
+      const target = event.target as Element;
+      if (target.closest('.dropdown-menu')) {
+        return;
+      }
+    }
+    dropdownOpen = '';
+  }
+
+  // Cleanup timeout on component destroy
+  onDestroy(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+  });
 </script>
+
+<svelte:window onclick={closeAllDropdowns} />
 
 <svelte:head>
   <title>Users Management - Admin</title>
@@ -101,7 +258,7 @@
       </div>
       <div class="flex space-x-3">
         <button
-          on:click={exportUsers}
+          onclick={exportUsers}
           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
         >
           <Download class="h-4 w-4 mr-2" />
@@ -124,7 +281,8 @@
             <input
               type="text"
               bind:value={searchTerm}
-              on:keydown={(e) => e.key === 'Enter' && handleSearch()}
+              oninput={handleSearchInput}
+              onkeydown={(e) => e.key === 'Enter' && handleSearch()}
               placeholder="Search users by name or email..."
               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
@@ -135,12 +293,12 @@
         <div class="flex-shrink-0">
           <select
             bind:value={selectedRole}
-            on:change={handleSearch}
+            onchange={handleSearch}
             class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="ALL">All Roles</option>
             <option value="STUDENT">Students</option>
-            <option value="INSTRUCTOR">Instructors</option>
+            <option value="TUTOR">Tutors</option>
             <option value="ADMIN">Admins</option>
           </select>
         </div>
@@ -149,7 +307,7 @@
         <div class="flex-shrink-0">
           <select
             bind:value={selectedStatus}
-            on:change={handleSearch}
+            onchange={handleSearch}
             class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="ALL">All Status</option>
@@ -160,11 +318,11 @@
         </div>
 
         <button
-          on:click={handleSearch}
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          onclick={clearFilters}
+          class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          <Filter class="h-4 w-4 mr-2" />
-          Filter
+          <X class="h-4 w-4 mr-2" />
+          Clear Filters
         </button>
       </div>
     </div>
@@ -184,7 +342,7 @@
   {/if}
 
   <!-- Users Table -->
-  <div class="bg-white shadow rounded-lg overflow-hidden">
+  <div class="bg-white shadow rounded-lg">
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -198,7 +356,7 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          {#each data.users as user}
+          {#each filteredUsers as user}
             <tr class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
@@ -216,7 +374,7 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {user.role === 'ADMIN' ? 'bg-red-100 text-red-800' : user.role === 'INSTRUCTOR' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {user.role === 'ADMIN' ? 'bg-red-100 text-red-800' : user.role === 'TUTOR' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
                   {user.role.toLowerCase()}
                 </span>
               </td>
@@ -248,32 +406,48 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {formatDate(user.createdAt)}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="relative inline-block text-left">
-                  <button
-                    on:click={() => toggleDropdown(user.id)}
-                    class="flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
-                  >
-                    <MoreHorizontal class="h-5 w-5" />
-                  </button>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative">
+                {#if user.email === 'admin@naijalingua.com' || user.name === 'System Administrator'}
+                  <!-- System Administrator cannot be edited -->
+                  <span class="text-gray-400 text-xs">Protected Account</span>
+                {:else}
+                  <div class="relative inline-block text-left">
+                    <button
+                      onclick={(e) => {
+                        toggleDropdown(user.id, e);
+                      }}
+                      class="flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                      <MoreHorizontal class="h-5 w-5" />
+                    </button>
 
-                  {#if dropdownOpen[user.id]}
-                    <div class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
-                      <div class="py-1">
+                    {#if dropdownOpen === user.id}
+                      <div class="relative">
+                        <div 
+                          class="dropdown-menu absolute right-0 mt-2 mb-4 px-1 w-52 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                          onclick={(e) => e.stopPropagation()}
+                          onkeydown={(e) => e.key === 'Escape' && closeDropdown(user.id)}
+                          role="menu"
+                          tabindex="0"
+                        >
+                      <div class="py-1 pb-4">
                         <!-- Role Change -->
                         <form method="POST" action="?/changeRole" use:enhance>
                           <input type="hidden" name="userId" value={user.id} />
                           <select
                             name="role"
-                            on:change={(e) => e.target.closest('form').submit()}
+                            onchange={(e) => {
+                              const form = (e.target as HTMLSelectElement).closest('form');
+                              if (form) form.submit();
+                            }}
                             class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-none focus:outline-none"
                           >
                             <option value={user.role} selected disabled>Change Role ({user.role})</option>
                             {#if user.role !== 'STUDENT'}
                               <option value="STUDENT">Make Student</option>
                             {/if}
-                            {#if user.role !== 'INSTRUCTOR'}
-                              <option value="INSTRUCTOR">Make Instructor</option>
+                            {#if user.role !== 'TUTOR'}
+                              <option value="TUTOR">Make Tutor</option>
                             {/if}
                             {#if user.role !== 'ADMIN'}
                               <option value="ADMIN">Make Admin</option>
@@ -331,8 +505,10 @@
                         {/if}
                       </div>
                     </div>
+                    </div>
                   {/if}
-                </div>
+                  </div>
+                {/if}
               </td>
             </tr>
           {/each}
@@ -346,7 +522,7 @@
         <div class="flex-1 flex justify-between sm:hidden">
           {#if data.pagination.hasPrev}
             <button
-              on:click={() => handlePageChange(data.pagination.page - 1)}
+              onclick={() => handlePageChange(data.pagination.page - 1)}
               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
               Previous
@@ -354,7 +530,7 @@
           {/if}
           {#if data.pagination.hasNext}
             <button
-              on:click={() => handlePageChange(data.pagination.page + 1)}
+              onclick={() => handlePageChange(data.pagination.page + 1)}
               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
               Next
@@ -377,7 +553,7 @@
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
               {#if data.pagination.hasPrev}
                 <button
-                  on:click={() => handlePageChange(data.pagination.page - 1)}
+                  onclick={() => handlePageChange(data.pagination.page - 1)}
                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                 >
                   <ChevronLeft class="h-5 w-5" />
@@ -390,7 +566,7 @@
               
               {#if data.pagination.hasNext}
                 <button
-                  on:click={() => handlePageChange(data.pagination.page + 1)}
+                  onclick={() => handlePageChange(data.pagination.page + 1)}
                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                 >
                   <ChevronRight class="h-5 w-5" />

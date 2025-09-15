@@ -4,13 +4,13 @@
 	import { Users, Award, TrendingUp, BookOpen, Mail, Calendar, Search, Filter, Download } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
 	let searchQuery = '';
 	let filterStatus = 'all'; // all, active, completed, not-started
 	let sortBy = 'recent'; // recent, name, progress, score
 
-	$: filteredStudents = data.students
+	let filteredStudents = $derived(data.students
 		.filter(student => {
 			// Search filter
 			if (searchQuery) {
@@ -40,7 +40,7 @@
 				default:
 					return new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime();
 			}
-		});
+		}));
 
 	function formatDate(dateString: string): string {
 		return new Date(dateString).toLocaleDateString('en-US', {

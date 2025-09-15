@@ -1,5 +1,4 @@
 import { db } from '$lib/db';
-import { NigerianLanguageAPI } from '$lib/api/nigerian-languages';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
@@ -8,9 +7,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		const languageFilter = url.searchParams.get('language');
 		const levelFilter = url.searchParams.get('level');
 
-		// Get courses from database and API
+		// Get courses from database only (Igbo-focused platform)
 		let dbCourses: any[] = [];
-		let apiCourses: any[] = [];
 
 		// Build where clause for database filtering
 		const where: any = {
@@ -70,92 +68,34 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			}
 		}
 
-		// Get API courses and filter them
-		apiCourses = NigerianLanguageAPI.getAllCourses();
-		
-		if (searchQuery) {
-			apiCourses = NigerianLanguageAPI.searchCourses(searchQuery);
-		}
-		
-		if (languageFilter) {
-			apiCourses = apiCourses.filter(course => course.language === languageFilter);
-		}
-		
-		if (levelFilter) {
-			apiCourses = apiCourses.filter(course => course.level === levelFilter);
-		}
-
-		// Transform API courses to match database format
-		const transformedApiCourses = apiCourses.map(course => ({
-			id: course.id,
-			title: course.title,
-			description: course.description,
-			language: course.language,
-			level: course.level,
-			imageUrl: null,
-			isPublished: true,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-			createdBy: {
-				name: 'NaijaLingua Academy'
-			},
-			_count: {
-				lessons: course.lessons.length,
-				enrollments: Math.floor(Math.random() * 500) + 50 // Simulated enrollment count
-			},
-			isApiCourse: true // Flag to identify API courses
-		}));
-
-		// Combine courses
-		const allCourses = [...dbCourses, ...transformedApiCourses];
+		// Only use database courses - no API courses for Igbo-focused platform
+		const allCourses = dbCourses;
 
 		// Get available filters from all courses
 		const allLanguages = [...new Set(allCourses.map(c => c.language))];
 		const allLevels = [...new Set(allCourses.map(c => c.level))];
 
 		return {
-			courses: allCourses,
-			languages: allLanguages,
-			levels: allLevels,
+			courses: allCourses.map(course => ({
+				...course,
+				isEnrolled: userEnrollments.some(enrollment => enrollment.courseId === course.id)
+			})),
+			availableLanguages: allLanguages,
+			availableLevels: allLevels,
 			searchQuery,
 			languageFilter,
-			levelFilter,
-			userEnrollments,
-			apiStats: NigerianLanguageAPI.getLanguageStats()
+			levelFilter
 		};
 	} catch (error) {
 		console.error('Error loading courses:', error);
-		// Return API courses as fallback
-		const apiCourses = NigerianLanguageAPI.getAllCourses();
-		const transformedApiCourses = apiCourses.map(course => ({
-			id: course.id,
-			title: course.title,
-			description: course.description,
-			language: course.language,
-			level: course.level,
-			imageUrl: null,
-			isPublished: true,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-			createdBy: {
-				name: 'NaijaLingua Academy'
-			},
-			_count: {
-				lessons: course.lessons.length,
-				enrollments: Math.floor(Math.random() * 500) + 50
-			},
-			isApiCourse: true
-		}));
-
+		// Return empty courses on error for Igbo-focused platform
 		return {
-			courses: transformedApiCourses,
-			languages: [...new Set(apiCourses.map(c => c.language))],
-			levels: [...new Set(apiCourses.map(c => c.level))],
+			courses: [],
+			availableLanguages: [],
+			availableLevels: [],
 			searchQuery: '',
 			languageFilter: null,
-			levelFilter: null,
-			userEnrollments: [],
-			apiStats: NigerianLanguageAPI.getLanguageStats()
+			levelFilter: null
 		};
 	}
 };

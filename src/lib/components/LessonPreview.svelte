@@ -116,6 +116,7 @@
 			</div>
 			
 			<button 
+				type="button"
 				onclick={toggleExpand}
 				class="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
 			>
@@ -153,6 +154,7 @@
 										{/if}
 									</div>
 									<button 
+										type="button"
 										onclick={() => playAudio('audio-url', `${index}-${wordIndex}`)}
 										class="p-2 hover:bg-white rounded-lg transition-colors"
 										class:animate-pulse={playingAudio === `${index}-${wordIndex}`}
@@ -191,6 +193,7 @@
 										{/if}
 									</div>
 									<button 
+										type="button"
 										onclick={() => playAudio('phrase-audio', `phrase-${index}-${phraseIndex}`)}
 										class="p-2 hover:bg-white rounded-lg transition-colors"
 										class:animate-pulse={playingAudio === `phrase-${index}-${phraseIndex}`}

@@ -15,7 +15,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
 	let showFilterDropdown = false;
 

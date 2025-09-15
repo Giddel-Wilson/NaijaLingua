@@ -180,13 +180,13 @@ export const actions: Actions = {
   changeRole: async ({ request }) => {
     const formData = await request.formData();
     const userId = formData.get('userId') as string;
-    const newRole = formData.get('role') as 'STUDENT' | 'INSTRUCTOR' | 'ADMIN';
+    const newRole = formData.get('role') as 'STUDENT' | 'TUTOR' | 'ADMIN';
 
     if (!userId || !newRole) {
       return fail(400, { error: 'User ID and role are required' });
     }
 
-    if (!['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(newRole)) {
+    if (!['STUDENT', 'TUTOR', 'ADMIN'].includes(newRole)) {
       return fail(400, { error: 'Invalid role' });
     }
 

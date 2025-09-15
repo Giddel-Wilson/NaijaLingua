@@ -11,6 +11,10 @@ declare global {
 				role: string;
 				suspended: boolean;
 				banned: boolean;
+				bio?: string | null;
+				profileImage?: string | null;
+				createdAt: Date;
+				updatedAt: Date;
 			};
 		}
 		// interface PageData {}

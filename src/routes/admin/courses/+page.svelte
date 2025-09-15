@@ -21,8 +21,7 @@
   import { goto } from '$app/navigation';
   import type { PageData, ActionData } from './$types';
 
-  export let data: PageData;
-  export let form: ActionData;
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 
   let searchTerm = data.filters.search;
   let selectedStatus = data.filters.status;
@@ -94,16 +93,36 @@
     URL.revokeObjectURL(url);
   }
 
-  let dropdownOpen: { [key: string]: boolean } = {};
+  let dropdownOpen: { [key: string]: boolean } = $state({});
 
-  function toggleDropdown(courseId: string) {
-    dropdownOpen = { [courseId]: !dropdownOpen[courseId] };
+  function toggleDropdown(courseId: string, event: MouseEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    // Close all other dropdowns and toggle this one
+    const newState: { [key: string]: boolean } = {};
+    const isCurrentlyOpen = dropdownOpen[courseId] || false;
+    newState[courseId] = !isCurrentlyOpen;
+    dropdownOpen = newState;
+  }
+
+  function closeAllDropdowns(event?: Event) {
+    // Don't close if clicking inside a dropdown
+    if (event && event.target) {
+      const target = event.target as Element;
+      if (target.closest('.dropdown-menu')) {
+        return;
+      }
+    }
+    dropdownOpen = {};
   }
 </script>
 
 <svelte:head>
   <title>Courses Management - Admin</title>
 </svelte:head>
+
+<svelte:window onclick={closeAllDropdowns} />
 
 <div class="space-y-6">
   <!-- Header -->
@@ -119,7 +138,7 @@
       </div>
       <div class="flex space-x-3">
         <button
-          on:click={exportCourses}
+          onclick={exportCourses}
           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
         >
           <Download class="h-4 w-4 mr-2" />
@@ -130,7 +149,7 @@
   </div>
 
   <!-- Stats Cards -->
-  <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
     <div class="bg-white overflow-hidden shadow rounded-lg">
       <div class="p-5">
         <div class="flex items-center">
@@ -178,22 +197,6 @@
         </div>
       </div>
     </div>
-
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-      <div class="p-5">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <DollarSign class="h-6 w-6 text-green-500" />
-          </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">Total Value</dt>
-              <dd class="text-2xl font-semibold text-gray-900">{formatCurrency(data.stats.revenue)}</dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Filters and Search -->
@@ -209,7 +212,7 @@
             <input
               type="text"
               bind:value={searchTerm}
-              on:keydown={(e) => e.key === 'Enter' && handleSearch()}
+              onkeydown={(e) => e.key === 'Enter' && handleSearch()}
               placeholder="Search courses, instructors..."
               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
@@ -220,7 +223,7 @@
         <div>
           <select
             bind:value={selectedStatus}
-            on:change={handleSearch}
+            onchange={handleSearch}
             class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="ALL">All Status</option>
@@ -235,7 +238,7 @@
         <div>
           <select
             bind:value={selectedLanguage}
-            on:change={handleSearch}
+            onchange={handleSearch}
             class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="ALL">All Languages</option>
@@ -249,7 +252,7 @@
         <div>
           <select
             bind:value={selectedLevel}
-            on:change={handleSearch}
+            onchange={handleSearch}
             class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="ALL">All Levels</option>
@@ -276,7 +279,7 @@
   {/if}
 
   <!-- Courses Table -->
-  <div class="bg-white shadow rounded-lg overflow-hidden">
+  <div class="bg-white shadow rounded-lg">
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -285,12 +288,12 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        
+        <tbody class="bg-white divide-y divide-gray-200 pb-4">
           {#each data.courses as course}
             <tr class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
@@ -323,7 +326,6 @@
                       <BookOpen class="h-4 w-4 mr-1 text-gray-400" />
                       {course._count.lessons} lessons
                     </span>
-                    <span class="font-medium">{formatCurrency(course.price)}</span>
                   </div>
                 </div>
               </td>
@@ -337,40 +339,34 @@
                   </span>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div class="flex items-center space-x-4">
-                  <span class="flex items-center">
-                    <Users class="h-4 w-4 mr-1" />
-                    {course._count.enrollments}
-                  </span>
-                  <span class="flex items-center">
-                    <TrendingUp class="h-4 w-4 mr-1" />
-                    {course._count.certificates}
-                  </span>
-                </div>
-              </td>
+              
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {formatDate(course.createdAt)}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative">
                 <div class="relative inline-block text-left">
                   <button
-                    on:click={() => toggleDropdown(course.id)}
+                    onclick={(e) => toggleDropdown(course.id, e)}
                     class="flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
                   >
                     <MoreHorizontal class="h-5 w-5" />
                   </button>
 
                   {#if dropdownOpen[course.id]}
-                    <div class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                    <div class="relative">
+                      <div 
+                        class="dropdown-menu absolute right-0 mt-2 mb-4 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                        onclick={(e) => e.stopPropagation()}
+                      >
                       <div class="py-1">
-                        <!-- View Course -->
+
+                        <!-- Manage Lessons -->
                         <a
-                          href="/instructor/courses/{course.id}"
-                          class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          href="/admin/courses/{course.id}"
+                          class="flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50"
                         >
-                          <Eye class="h-4 w-4 mr-2" />
-                          View Course
+                          <BookOpen class="h-4 w-4 mr-2" />
+                          Manage Lessons
                         </a>
 
                         <!-- Toggle Publish -->
@@ -416,7 +412,7 @@
                           <button
                             type="submit"
                             class="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-                            on:click={(e) => {
+                            onclick={(e) => {
                               if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
                                 e.preventDefault();
                               }
@@ -427,6 +423,7 @@
                           </button>
                         </form>
                       </div>
+                    </div>
                     </div>
                   {/if}
                 </div>
@@ -443,7 +440,7 @@
         <div class="flex-1 flex justify-between sm:hidden">
           {#if data.pagination.hasPrev}
             <button
-              on:click={() => handlePageChange(data.pagination.page - 1)}
+              onclick={() => handlePageChange(data.pagination.page - 1)}
               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
               Previous
@@ -451,7 +448,7 @@
           {/if}
           {#if data.pagination.hasNext}
             <button
-              on:click={() => handlePageChange(data.pagination.page + 1)}
+              onclick={() => handlePageChange(data.pagination.page + 1)}
               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
               Next
@@ -474,7 +471,7 @@
             <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
               {#if data.pagination.hasPrev}
                 <button
-                  on:click={() => handlePageChange(data.pagination.page - 1)}
+                  onclick={() => handlePageChange(data.pagination.page - 1)}
                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                 >
                   <ChevronLeft class="h-5 w-5" />
@@ -487,7 +484,7 @@
               
               {#if data.pagination.hasNext}
                 <button
-                  on:click={() => handlePageChange(data.pagination.page + 1)}
+                  onclick={() => handlePageChange(data.pagination.page + 1)}
                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                 >
                   <ChevronRight class="h-5 w-5" />

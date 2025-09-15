@@ -71,13 +71,13 @@ export const actions: Actions = {
 			// Generate JWT token
 			const token = generateToken(user);
 			
-			// Set secure cookie
+			// Set secure cookie with better persistence
 			cookies.set('auth-token', token, {
 				path: '/',
 				httpOnly: true,
 				secure: process.env.NODE_ENV === 'production',
-				sameSite: 'strict',
-				maxAge: 60 * 60 * 24 * 7 // 7 days
+				sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
+				maxAge: 60 * 60 * 24 * 30 // 30 days instead of 7 days
 			});
 			
 			// Return success response with redirect URL

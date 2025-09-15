@@ -56,14 +56,6 @@
 				</a>
 				
 				{#if user}
-					<a 
-						href="/dashboard" 
-						class="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors {isDashboardPage ? 'text-primary bg-primary/10' : 'text-gray-700 hover:text-primary'}"
-					>
-						<User class="w-4 h-4" />
-						<span>Dashboard</span>
-					</a>
-					
 					{#if user.role === 'ADMIN'}
 						<a 
 							href="/admin" 
@@ -71,6 +63,14 @@
 						>
 							<Settings class="w-4 h-4" />
 							<span>Admin</span>
+						</a>
+					{:else}
+						<a 
+							href="/dashboard" 
+							class="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors {isDashboardPage ? 'text-primary bg-primary/10' : 'text-gray-700 hover:text-primary'}"
+						>
+							<User class="w-4 h-4" />
+							<span>Dashboard</span>
 						</a>
 					{/if}
 				{/if}
@@ -80,6 +80,18 @@
 			<div class="hidden md:flex items-center space-x-4">
 				{#if user}
 					<div class="flex items-center space-x-3">
+						<!-- Profile Image -->
+						<div class="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+							{#if user.profileImage}
+								<img 
+									src={user.profileImage} 
+									alt={user.name}
+									class="w-full h-full object-cover"
+								/>
+							{:else}
+								<User class="w-4 h-4 text-gray-400" />
+							{/if}
+						</div>
 						<span class="text-sm text-gray-700">Welcome, {user.name}</span>
 						<button 
 							on:click={logout}
@@ -145,15 +157,6 @@
 					</a>
 					
 					{#if user}
-						<a 
-							href="/dashboard" 
-							class="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium {isDashboardPage ? 'text-primary bg-primary/10' : 'text-gray-700 hover:text-primary'}"
-							on:click={() => mobileMenuOpen = false}
-						>
-							<User class="w-5 h-5" />
-							<span>Dashboard</span>
-						</a>
-						
 						{#if user.role === 'ADMIN'}
 							<a 
 								href="/admin" 
@@ -162,6 +165,15 @@
 							>
 								<Settings class="w-5 h-5" />
 								<span>Admin</span>
+							</a>
+						{:else}
+							<a 
+								href="/dashboard" 
+								class="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium {isDashboardPage ? 'text-primary bg-primary/10' : 'text-gray-700 hover:text-primary'}"
+								on:click={() => mobileMenuOpen = false}
+							>
+								<User class="w-5 h-5" />
+								<span>Dashboard</span>
 							</a>
 						{/if}
 						

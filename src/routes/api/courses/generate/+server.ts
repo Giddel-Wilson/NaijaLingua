@@ -32,7 +32,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         description: generatedCourse.description,
         language: generatedCourse.language,
         level: generatedCourse.level,
-        tags: ['auto-generated', 'open-source', 'authentic-content', ...generatedCourse.skills],
+        tags: JSON.stringify(['auto-generated', 'open-source', 'authentic-content', ...generatedCourse.skills]),
         isPublished: false, // Admin can review before publishing
         isApproved: false,
         createdById: locals.user.id,

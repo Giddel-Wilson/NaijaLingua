@@ -12,7 +12,7 @@
 	} from 'lucide-svelte';
 	import type { PageData } from './$types';
 
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
 
 	function formatDate(date: Date | string) {
 		return new Date(date).toLocaleDateString('en-US', {

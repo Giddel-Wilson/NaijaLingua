@@ -52,9 +52,8 @@ export const actions: Actions = {
 		const name = data.get('name') as string;
 		const email = data.get('email') as string;
 		const bio = data.get('bio') as string;
-		const profileImage = data.get('profileImage') as string;
 
-		console.log('Profile update data:', { name, email, bio, profileImage: profileImage ? 'present' : 'not present' });
+		console.log('Profile update data:', { name, email, bio });
 
 		// Validate required fields
 		if (!name || !email) {
@@ -70,8 +69,7 @@ export const actions: Actions = {
 				data: {
 					name: name,
 					email: email,
-					bio: bio || null,
-					profileImage: profileImage || null
+					bio: bio || null
 				}
 			});
 

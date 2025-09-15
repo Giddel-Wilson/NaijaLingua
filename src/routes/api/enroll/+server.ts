@@ -5,7 +5,7 @@ import type { RequestHandler } from './$types';
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const user = locals.user;
 	if (!user) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
+		return json({ error: 'Please log in first to enroll in courses' }, { status: 401 });
 	}
 
 	try {

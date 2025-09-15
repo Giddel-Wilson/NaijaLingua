@@ -35,12 +35,12 @@ async function main() {
     }
   });
 
-  // Create sample courses
-  const yorubaCourse = await prisma.course.create({
+  // Create sample courses - Only Igbo courses
+  const igboBeginnerCourse = await prisma.course.create({
     data: {
-      title: 'Learn Yoruba from Scratch',
-      description: 'A comprehensive course to learn Yoruba language from basics to intermediate level. Perfect for beginners who want to understand and speak Yoruba fluently.',
-      language: 'YORUBA',
+      title: 'Igbo for Beginners',
+      description: 'Start your Igbo language journey from scratch. Learn basic greetings, numbers, and everyday expressions with cultural context.',
+      language: 'IGBO',
       level: 'BEGINNER',
       imageUrl: null,
       isPublished: true,
@@ -48,7 +48,7 @@ async function main() {
     }
   });
 
-  const igboCourse = await prisma.course.create({
+  const igboIntermediateCourse = await prisma.course.create({
     data: {
       title: 'Intermediate Igbo Language',
       description: 'Build upon your basic Igbo knowledge with this intermediate course. Learn complex grammar, cultural expressions, and advanced vocabulary.',
@@ -60,11 +60,11 @@ async function main() {
     }
   });
 
-  const hausaCourse = await prisma.course.create({
+  const igboAdvancedCourse = await prisma.course.create({
     data: {
-      title: 'Advanced Hausa Communication',
-      description: 'Master advanced Hausa language skills for professional and cultural communication. Focus on business language and cultural nuances.',
-      language: 'HAUSA',
+      title: 'Advanced Igbo Culture & Communication',
+      description: 'Master advanced Igbo language skills and dive deep into Igbo culture, proverbs, traditional stories, and sophisticated communication.',
+      language: 'IGBO',
       level: 'ADVANCED',
       imageUrl: null,
       isPublished: true,
@@ -72,24 +72,12 @@ async function main() {
     }
   });
 
-  const pidginCourse = await prisma.course.create({
-    data: {
-      title: 'Nigerian Pidgin English',
-      description: 'Learn the widely spoken Nigerian Pidgin English. Understand everyday expressions, slang, and cultural context.',
-      language: 'EDO', // Using EDO as placeholder since PIDGIN is not in enum
-      level: 'BEGINNER',
-      imageUrl: null,
-      isPublished: true,
-      createdById: instructor.id
-    }
-  });
-
-  // Create sample lessons for Yoruba course
+  // Create sample lessons for Igbo beginner course
   const lesson1 = await prisma.lesson.create({
     data: {
-      courseId: yorubaCourse.id,
-      title: 'Basic Greetings in Yoruba',
-      contentHtml: '<h2>Welcome to Yoruba Greetings</h2><p>Learn how to greet people in Yoruba...</p>',
+      courseId: igboBeginnerCourse.id,
+      title: 'Basic Greetings in Igbo',
+      contentHtml: '<h2>Welcome to Igbo Greetings</h2><p>Learn how to greet people in Igbo language...</p>',
       order: 1,
       isPublished: true
     }
@@ -97,35 +85,35 @@ async function main() {
 
   const lesson2 = await prisma.lesson.create({
     data: {
-      courseId: yorubaCourse.id,
-      title: 'Numbers and Counting',
-      contentHtml: '<h2>Yoruba Numbers</h2><p>Learn to count from 1 to 100 in Yoruba...</p>',
+      courseId: igboBeginnerCourse.id,
+      title: 'Numbers and Counting in Igbo',
+      contentHtml: '<h2>Igbo Numbers</h2><p>Learn to count from 1 to 100 in Igbo language...</p>',
       order: 2,
       isPublished: true
     }
   });
 
-  // Create sample lessons for other courses
+  // Create sample lessons for other Igbo courses
   await prisma.lesson.createMany({
     data: [
       {
-        courseId: igboCourse.id,
+        courseId: igboIntermediateCourse.id,
         title: 'Igbo Grammar Fundamentals',
-        contentHtml: '<h2>Understanding Igbo Grammar</h2>',
+        contentHtml: '<h2>Understanding Igbo Grammar</h2><p>Master the fundamentals of Igbo grammar structure...</p>',
         order: 1,
         isPublished: true
       },
       {
-        courseId: hausaCourse.id,
-        title: 'Business Hausa Vocabulary',
-        contentHtml: '<h2>Professional Hausa Terms</h2>',
-        order: 1,
+        courseId: igboIntermediateCourse.id,
+        title: 'Igbo Cultural Expressions',
+        contentHtml: '<h2>Igbo Proverbs and Sayings</h2><p>Learn common Igbo proverbs and their meanings...</p>',
+        order: 2,
         isPublished: true
       },
       {
-        courseId: pidginCourse.id,
-        title: 'Everyday Pidgin Expressions',
-        contentHtml: '<h2>Common Pidgin Phrases</h2>',
+        courseId: igboAdvancedCourse.id,
+        title: 'Advanced Igbo Literature',
+        contentHtml: '<h2>Igbo Traditional Stories</h2><p>Explore rich Igbo folktales and literature...</p>',
         order: 1,
         isPublished: true
       }
@@ -136,7 +124,7 @@ async function main() {
   await prisma.enrollment.create({
     data: {
       userId: student.id,
-      courseId: yorubaCourse.id,
+      courseId: igboBeginnerCourse.id,
       progress: 45.5,
       score: null
     }
@@ -145,7 +133,7 @@ async function main() {
   await prisma.enrollment.create({
     data: {
       userId: student.id,
-      courseId: pidginCourse.id,
+      courseId: igboIntermediateCourse.id,
       progress: 0,
       score: null
     }
@@ -155,31 +143,31 @@ async function main() {
   await prisma.certificate.create({
     data: {
       userId: student.id,
-      courseId: igboCourse.id,
+      courseId: igboIntermediateCourse.id,
       score: 87.5,
       dateIssued: new Date('2024-01-15')
     }
   });
 
-  // Create sample quizzes
+  // Create sample quizzes for Igbo courses
   await prisma.quiz.createMany({
     data: [
       {
         lessonId: lesson1.id,
         type: 'MCQ',
-        question: 'How do you say "Good morning" in Yoruba?',
-        options: JSON.stringify(['E kaaro', 'E kaaale', 'E ku aaro', 'Pele']),
-        correctAnswer: 'E kaaro',
-        explanation: 'E kaaro is the correct way to say good morning in Yoruba.',
+        question: 'How do you say "Good morning" in Igbo?',
+        options: JSON.stringify(['Ụtụtụ ọma', 'Ehihie ọma', 'Mgbede ọma', 'Abalị ọma']),
+        correctAnswer: 'Ụtụtụ ọma',
+        explanation: 'Ụtụtụ ọma is the correct way to say good morning in Igbo.',
         order: 1
       },
       {
         lessonId: lesson2.id,
         type: 'MCQ',
-        question: 'What is the number 5 in Yoruba?',
-        options: JSON.stringify(['Erin', 'Marun', 'Mefa', 'Meje']),
-        correctAnswer: 'Marun',
-        explanation: 'Marun means five in Yoruba.',
+        question: 'What is the number 5 in Igbo?',
+        options: JSON.stringify(['Anọ', 'Ise', 'Isii', 'Asaa']),
+        correctAnswer: 'Ise',
+        explanation: 'Ise means five in Igbo.',
         order: 1
       }
     ]

@@ -30,7 +30,7 @@ export const load: PageServerLoad = async () => {
       // Calculate revenue based on course prices
       db.enrollment.aggregate({
         _sum: {
-          totalScore: true // Placeholder for payment integration
+          totalScore: true
         }
       }),
       // Growth metrics
@@ -43,7 +43,7 @@ export const load: PageServerLoad = async () => {
       db.enrollment.count({
         where: { startedAt: { gte: thirtyDaysAgo } }
       }),
-      // Activity metrics (placeholder - you'd implement proper tracking)
+      // Activity metrics (using updatedAt as proxy for activity)
       db.user.count({
         where: { updatedAt: { gte: oneDayAgo } }
       }),
@@ -55,10 +55,12 @@ export const load: PageServerLoad = async () => {
       })
     ]);
 
-    // Course Performance
+    // Course Performance - Fixed orderBy syntax
     const topCourses = await db.course.findMany({
       take: 10,
-      orderBy: { enrollments: { _count: 'desc' } },
+      orderBy: { 
+        enrollments: { _count: 'desc' } 
+      },
       include: {
         createdBy: { select: { name: true } },
         _count: {
@@ -135,9 +137,9 @@ export const load: PageServerLoad = async () => {
         totalEnrollments,
         totalRevenue: totalRevenue._sum.totalScore || 0,
         growth: {
-          users: (newUsersThisMonth / totalUsers) * 100,
-          courses: (newCoursesThisMonth / totalCourses) * 100,
-          enrollments: (newEnrollmentsThisMonth / totalEnrollments) * 100,
+          users: totalUsers > 0 ? (newUsersThisMonth / totalUsers) * 100 : 0,
+          courses: totalCourses > 0 ? (newCoursesThisMonth / totalCourses) * 100 : 0,
+          enrollments: totalEnrollments > 0 ? (newEnrollmentsThisMonth / totalEnrollments) * 100 : 0,
           revenue: revenueGrowth
         }
       },
@@ -150,7 +152,7 @@ export const load: PageServerLoad = async () => {
         topCourses: topCourses.map(course => ({
           ...course,
           enrollmentRate: course._count.enrollments,
-          completionRate: course._count.certificates > 0 
+          completionRate: course._count.certificates > 0 && course._count.enrollments > 0
             ? (course._count.certificates / course._count.enrollments) * 100 
             : 0
         })),

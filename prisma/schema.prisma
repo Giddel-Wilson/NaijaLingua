@@ -36,7 +36,7 @@ model Course {
   price        Float         @default(0)
   currency     String        @default("USD")
   category     String?
-  tags         String        @default("")  // JSON string for SQLite compatibility
+  tags         String        @default("")
   isPublished  Boolean       @default(false)
   isApproved   Boolean       @default(false)
   createdById  String
@@ -51,90 +51,90 @@ model Course {
 }
 
 model Lesson {
-  id          String   @id @default(cuid())
-  courseId    String
-  title       String
-  description String?
-  contentHtml String?
-  videoUrl    String?
-  audioUrl    String?
-  imageUrl    String?
-  duration    Int?     // duration in minutes
-  order       Int
-  isPublished Boolean  @default(false)
-  contentSource String? // MAVEN, IGBO_API, LANFRICA, COMMONVOICE
-  vocabulary  Json?    // African language vocabulary from APIs
-  culturalNotes String? // Cultural context for the lesson
-  audioData   Json?    // CommonVoice audio clips
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  quizzes     Quiz[]
-  progress    LessonProgress[]
+  id            String           @id @default(cuid())
+  courseId      String
+  title         String
+  description   String?
+  contentHtml   String?
+  videoUrl      String?
+  audioUrl      String?
+  imageUrl      String?
+  duration      Int?
+  order         Int
+  isPublished   Boolean          @default(false)
+  contentSource String?
+  vocabulary    Json?
+  culturalNotes String?
+  audioData     Json?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  progress      LessonProgress[]
+  course        Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quizzes       Quiz[]
 
   @@map("lessons")
 }
 
 model LessonProgress {
-  id         String   @id @default(cuid())
-  userId     String
-  lessonId   String
-  completed  Boolean  @default(false)
-  timeSpent  Int      @default(0) // in minutes
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  completed   Boolean   @default(false)
+  timeSpent   Int       @default(0)
   completedAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@map("lesson_progress")
 }
 
 model Quiz {
-  id            String   @id @default(cuid())
+  id            String        @id @default(cuid())
   lessonId      String
   type          QuizType
   question      String
   options       Json
   correctAnswer String
   explanation   String?
-  points        Int      @default(10)
+  points        Int           @default(10)
   order         Int
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   attempts      QuizAttempt[]
+  lesson        Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@map("quizzes")
 }
 
 model QuizAttempt {
-  id         String   @id @default(cuid())
-  userId     String
-  quizId     String
-  answer     String
-  isCorrect  Boolean
-  score      Int      @default(0)
+  id          String   @id @default(cuid())
+  userId      String
+  quizId      String
+  answer      String
+  isCorrect   Boolean
+  score       Int      @default(0)
   attemptedAt DateTime @default(now())
-  quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   @@map("quiz_attempts")
 }
 
 model Enrollment {
-  userId       String
-  courseId     String
-  progress     Float    @default(0)
-  score        Float?
-  totalScore   Float?   @default(0)
-  lessonsCompleted Int  @default(0)
-  quizzesCompleted Int  @default(0)
-  isCompleted  Boolean  @default(false)
-  completedAt  DateTime?
-  startedAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  course       Course   @relation(fields: [courseId], references: [id])
-  user         User     @relation(fields: [userId], references: [id])
+  userId           String
+  courseId         String
+  progress         Float     @default(0)
+  score            Float?
+  totalScore       Float?    @default(0)
+  lessonsCompleted Int       @default(0)
+  quizzesCompleted Int       @default(0)
+  isCompleted      Boolean   @default(false)
+  completedAt      DateTime?
+  startedAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  course           Course    @relation(fields: [courseId], references: [id])
+  user             User      @relation(fields: [userId], references: [id])
 
   @@id([userId, courseId])
   @@map("enrollments")
@@ -153,35 +153,35 @@ model Certificate {
 }
 
 model Vocabulary {
-  id          String   @id @default(cuid())
-  language    Language
-  word        String
-  translation String
-  pronunciation String?
-  audioUrl    String?
-  example     String?
+  id                 String   @id @default(cuid())
+  language           Language
+  word               String
+  translation        String
+  pronunciation      String?
+  audioUrl           String?
+  example            String?
   exampleTranslation String?
-  category    String?
-  source      String   // MAVEN, IGBO_API, LANFRICA
-  sourceData  Json?    // Original API response data
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  category           String?
+  source             String
+  sourceData         Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   @@unique([language, word])
   @@map("vocabulary")
 }
 
 model CulturalContent {
-  id          String   @id @default(cuid())
-  language    Language
-  topic       String
-  title       String
-  content     String
-  imageUrl    String?
-  videoUrl    String?
-  source      String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  language  Language
+  topic     String
+  title     String
+  content   String
+  imageUrl  String?
+  videoUrl  String?
+  source    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("cultural_content")
 }

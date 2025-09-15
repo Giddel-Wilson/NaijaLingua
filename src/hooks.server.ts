@@ -8,11 +8,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const token = event.cookies.get('auth-token');
 	
 	if (token) {
-		const payload = verifyToken(token);
-		
-		if (payload) {
-			try {
-				// Get user from database
+		try {
+			const payload = verifyToken(token);
+			
+			if (payload) {
+				// Get user from database with retry logic
 				const user = await db.user.findUnique({
 					where: { id: payload.userId },
 					select: {
@@ -21,23 +21,38 @@ export const handle: Handle = async ({ event, resolve }) => {
 						email: true,
 						role: true,
 						suspended: true,
-						banned: true
+						banned: true,
+						bio: true,
+						profileImage: true,
+						createdAt: true,
+						updatedAt: true
 					}
 				});
 				
 				if (user && !user.banned && !user.suspended) {
 					event.locals.user = user;
-				} else {
-					// Clear invalid cookie
+				} else if (user && (user.banned || user.suspended)) {
+					// Clear cookie for banned/suspended users
 					event.cookies.delete('auth-token', { path: '/' });
+					console.log(`Cleared auth token for ${user.banned ? 'banned' : 'suspended'} user: ${user.email}`);
+				} else {
+					// User not found - token is stale
+					event.cookies.delete('auth-token', { path: '/' });
+					console.log('Cleared auth token for non-existent user');
 				}
-			} catch (error) {
-				console.error('Error fetching user:', error);
+			} else {
+				// Invalid token
+				event.cookies.delete('auth-token', { path: '/' });
+				console.log('Cleared invalid auth token');
+			}
+		} catch (error) {
+			console.error('Auth verification error:', error);
+			// Don't clear cookie on database errors - might be temporary
+			if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
+				console.log('Database connection error - keeping auth token');
+			} else {
 				event.cookies.delete('auth-token', { path: '/' });
 			}
-		} else {
-			// Clear invalid token
-			event.cookies.delete('auth-token', { path: '/' });
 		}
 	}
 	

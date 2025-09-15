@@ -1,17 +1,18 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { User, Camera, Lock, Trash2, Save, Upload } from 'lucide-svelte';
 	import { toasts } from '$lib/stores/toast';
 	import type { PageData, ActionData } from './$types';
 
-	export let data: PageData;
-	export let form: ActionData;
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let profileImageInput: HTMLInputElement;
-	let profileImagePreview = data.user.profileImage || '';
-	let isUploading = false;
+	let profileImagePreview = $state(data.user.profileImage || '');
+	let isUploading = $state(false);
+	let uploadProgress = $state(0);
 
-	// Handle profile image upload
+	// Handle profile image upload to Cloudinary
 	async function handleImageUpload(event: Event) {
 		const target = event.target as HTMLInputElement;
 		const file = target.files?.[0];
@@ -28,19 +29,55 @@
 		if (file.size > 5 * 1024 * 1024) {
 			toasts.add({ message: 'Image size must be less than 5MB', type: 'error' });
 			return;
-		}		isUploading = true;
+		}
+
+		isUploading = true;
+		uploadProgress = 0;
 
 		try {
-			// Convert to base64 for now (in production, you'd upload to a cloud service)
-			const reader = new FileReader();
-			reader.onload = (e) => {
-				profileImagePreview = e.target?.result as string;
-				isUploading = false;
-			};
-			reader.readAsDataURL(file);
+			// Create form data for upload
+			const formData = new FormData();
+			formData.append('image', file);
+
+			// Simulate upload progress
+			const progressInterval = setInterval(() => {
+				if (uploadProgress < 80) {
+					uploadProgress += Math.random() * 20;
+				}
+			}, 100);
+
+			// Upload to our API endpoint (using local storage for now)
+			const response = await fetch('/api/upload/profile-image-local', {
+				method: 'POST',
+				body: formData
+			});
+
+			clearInterval(progressInterval);
+			uploadProgress = 100;
+
+			const result = await response.json();
+
+			if (response.ok && result.success) {
+				profileImagePreview = result.imageUrl;
+				toasts.add({ message: result.message, type: 'success' });
+				
+				// Update the user data to reflect the change immediately
+				data.user.profileImage = result.imageUrl;
+				
+				// Invalidate all data to refresh the header and other components
+				await invalidateAll();
+			} else {
+				throw new Error(result.error || 'Upload failed');
+			}
 		} catch (error) {
-			toasts.add({ message: 'Failed to upload image', type: 'error' });
+			console.error('Upload error:', error);
+			toasts.add({ 
+				message: error instanceof Error ? error.message : 'Failed to upload image', 
+				type: 'error' 
+			});
+		} finally {
 			isUploading = false;
+			uploadProgress = 0;
 		}
 	}
 
@@ -56,7 +93,7 @@
 	}
 
 	// Delete confirmation
-	let showDeleteConfirmation = false;
+	let showDeleteConfirmation = $state(false);
 </script>
 
 <svelte:head>
@@ -89,7 +126,7 @@
 				>
 					<!-- Profile Image Upload -->
 					<div class="mb-6">
-						<label class="block text-sm font-medium text-gray-700 mb-2">
+						<label for="profileImage" class="block text-sm font-medium text-gray-700 mb-2">
 							Profile Picture
 						</label>
 						<div class="flex items-center space-x-6">
@@ -114,7 +151,7 @@
 							<div>
 								<button 
 									type="button"
-									on:click={() => profileImageInput.click()}
+									onclick={() => profileImageInput.click()}
 									class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center"
 									disabled={isUploading}
 								>
@@ -123,15 +160,16 @@
 								</button>
 								<input 
 									bind:this={profileImageInput}
+									id="profileImage"
 									type="file" 
 									accept="image/*" 
-									on:change={handleImageUpload}
+									onchange={handleImageUpload}
 									class="hidden"
 								/>
 								<p class="text-xs text-gray-500 mt-1">JPG, PNG up to 5MB</p>
 							</div>
 						</div>
-						<input type="hidden" name="profileImage" value={profileImagePreview} />
+						<!-- Remove the hidden input since we're now uploading directly -->
 					</div>
 
 					<!-- Name Field -->
@@ -303,7 +341,7 @@
 					
 					{#if !showDeleteConfirmation}
 						<button 
-							on:click={() => showDeleteConfirmation = true}
+							onclick={() => showDeleteConfirmation = true}
 							class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center"
 						>
 							<Trash2 class="h-4 w-4 mr-2" />
@@ -339,7 +377,7 @@
 									</button>
 									<button 
 										type="button"
-										on:click={() => showDeleteConfirmation = false}
+										onclick={() => showDeleteConfirmation = false}
 										class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors duration-200"
 									>
 										Cancel

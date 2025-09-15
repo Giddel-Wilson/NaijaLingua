@@ -50,11 +50,46 @@ async function main() {
     }
   });
 
-  // Seed comprehensive course data from our API
-  console.log('📚 Creating courses from Nigerian Language API...');
-  const createdCourses = await NigerianLanguageAPI.seedCoursesToDatabase(prisma, admin.id);
+  // Seed only Igbo course data from our API
+  console.log('📚 Creating Igbo courses from Nigerian Language API...');
   
-  console.log(`✅ Created ${createdCourses.length} courses from API`);
+  // Filter for only Igbo courses and create them manually
+  const igboCourses = NigerianLanguageAPI.getCourseByLanguage('IGBO');
+  const createdCourses = [];
+  
+  for (const courseData of igboCourses) {
+    try {
+      const course = await prisma.course.create({
+        data: {
+          title: courseData.title,
+          description: courseData.description,
+          language: courseData.language as any,
+          level: courseData.level as any,
+          isPublished: true,
+          createdById: admin.id
+        }
+      });
+
+      // Add lessons for each course
+      for (const lessonData of courseData.lessons) {
+        await prisma.lesson.create({
+          data: {
+            courseId: course.id,
+            title: lessonData.title,
+            contentHtml: lessonData.content,
+            order: courseData.lessons.indexOf(lessonData) + 1,
+            isPublished: true
+          }
+        });
+      }
+
+      createdCourses.push(course);
+    } catch (error) {
+      console.error(`Error creating Igbo course ${courseData.title}:`, error);
+    }
+  }
+  
+  console.log(`✅ Created ${createdCourses.length} Igbo courses from API`);
 
   // Create enrollments for students
   const enrollmentData: any[] = [];
@@ -113,34 +148,34 @@ async function main() {
   const quizData = [
     {
       type: 'MCQ' as const,
-      question: 'How do you say "Good morning" in Yoruba?',
-      options: JSON.stringify(['E kaaro', 'E kaasan', 'E kaale', 'O daaro']),
-      correctAnswer: 'E kaaro',
-      explanation: 'E kaaro is the correct way to say good morning in Yoruba.',
+      question: 'How do you say "Good morning" in Igbo?',
+      options: JSON.stringify(['Ụtụtụ ọma', 'Ehihie ọma', 'Mgbede ọma', 'Abalị ọma']),
+      correctAnswer: 'Ụtụtụ ọma',
+      explanation: 'Ụtụtụ ọma is the correct way to say good morning in Igbo.',
       order: 1
     },
     {
       type: 'MCQ' as const,
-      question: 'What is the number 5 in Yoruba?',
-      options: JSON.stringify(['Erin', 'Marun', 'Mefa', 'Meje']),
-      correctAnswer: 'Marun',
-      explanation: 'Marun means five in Yoruba.',
+      question: 'What is the number 5 in Igbo?',
+      options: JSON.stringify(['Anọ', 'Ise', 'Isii', 'Asaa']),
+      correctAnswer: 'Ise',
+      explanation: 'Ise means five in Igbo.',
       order: 2
     },
     {
       type: 'MCQ' as const,
       question: 'How do you say "Hello" in Igbo?',
-      options: JSON.stringify(['Kedu', 'Ndewo', 'Ututu oma', 'Dalu']),
+      options: JSON.stringify(['Kedu', 'Ndewo', 'Ụtụtụ ọma', 'Daalụ']),
       correctAnswer: 'Ndewo',
       explanation: 'Ndewo is the most common way to say hello in Igbo.',
       order: 1
     },
     {
       type: 'MCQ' as const,
-      question: 'How do you say "Thank you" in Hausa?',
-      options: JSON.stringify(['Sannu', 'Na gode', 'Lafiya lau', 'Ba komai']),
-      correctAnswer: 'Na gode',
-      explanation: 'Na gode is the way to say thank you in Hausa.',
+      question: 'How do you say "Thank you" in Igbo?',
+      options: JSON.stringify(['Kedu', 'Ndewo', 'Daalụ', 'Ngwanụ']),
+      correctAnswer: 'Daalụ',
+      explanation: 'Daalụ is the way to say thank you in Igbo.',
       order: 1
     }
   ];

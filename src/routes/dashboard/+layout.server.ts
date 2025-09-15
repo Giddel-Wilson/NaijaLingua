@@ -7,48 +7,104 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		throw redirect(303, '/auth/login');
 	}
 	
-	// Get user's enrollments and progress
-	const enrollments = await db.enrollment.findMany({
-		where: {
-			userId: locals.user.id
-		},
-		include: {
-			course: {
-				include: {
-					lessons: {
-						where: {
-							isPublished: true
-						},
-						select: {
-							id: true
+	// Redirect admins to their admin panel
+	if (locals.user.role === 'ADMIN') {
+		throw redirect(303, '/admin');
+	}
+	
+	const baseData = {
+		user: locals.user
+	};
+	
+	if (locals.user.role === 'INSTRUCTOR') {
+		// Instructor-specific data
+		const courses = await db.course.findMany({
+			where: {
+				instructorId: locals.user.id
+			},
+			include: {
+				lessons: {
+					where: { isPublished: true },
+					select: { id: true }
+				},
+				enrollments: {
+					select: {
+						id: true,
+						progress: true,
+						user: {
+							select: {
+								name: true,
+								email: true
+							}
+						}
+					}
+				},
+				_count: {
+					select: {
+						enrollments: true,
+						lessons: true
+					}
+				}
+			},
+			orderBy: {
+				createdAt: 'desc'
+			}
+		});
+		
+		const totalEnrollments = courses.reduce((sum, course) => sum + course._count.enrollments, 0);
+		const totalLessons = courses.reduce((sum, course) => sum + course._count.lessons, 0);
+		
+		return {
+			...baseData,
+			courses,
+			totalEnrollments,
+			totalLessons,
+			role: 'INSTRUCTOR'
+		};
+	} else {
+		// Student-specific data (existing logic)
+		const enrollments = await db.enrollment.findMany({
+			where: {
+				userId: locals.user.id
+			},
+			include: {
+				course: {
+					include: {
+						lessons: {
+							where: {
+								isPublished: true
+							},
+							select: {
+								id: true
+							}
 						}
 					}
 				}
 			}
-		}
-	});
-	
-	// Get user's certificates
-	const certificates = await db.certificate.findMany({
-		where: {
-			userId: locals.user.id
-		},
-		include: {
-			course: {
-				select: {
-					title: true,
-					language: true
+		});
+		
+		const certificates = await db.certificate.findMany({
+			where: {
+				userId: locals.user.id
+			},
+			include: {
+				course: {
+					select: {
+						title: true,
+						language: true
+					}
 				}
+			},
+			orderBy: {
+				dateIssued: 'desc'
 			}
-		},
-		orderBy: {
-			dateIssued: 'desc'
-		}
-	});
-	
-	return {
-		user: locals.user,
-		enrollments,
-		certificates
-	};
+		});
+		
+		return {
+			...baseData,
+			enrollments,
+			certificates,
+			role: 'STUDENT'
+		};
+	}
 };

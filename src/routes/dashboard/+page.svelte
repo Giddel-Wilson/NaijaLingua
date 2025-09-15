@@ -1,258 +1,178 @@
 <script lang="ts">
-	import { 
-		BookOpen, 
-		TrendingUp, 
-		Award, 
-		Clock,
-		ArrowRight,
-		Play,
-		CheckCircle,
-		Settings,
-		PlusCircle
-	} from 'lucide-svelte';
-	import { formatLanguage, formatLevel, formatProgress, formatDate } from '$lib/utils';
+	import { Trophy, TrendingUp, Book, Clock, Play } from 'lucide-svelte';
 	import type { PageData } from './$types';
-	
+
 	let { data }: { data: PageData } = $props();
-	
-	// Calculate stats
-	const totalCourses = $derived(data.enrollments.length);
-	const completedCourses = $derived(data.certificates.length);
-	const averageProgress = $derived(data.enrollments.length > 0 
-		? data.enrollments.reduce((sum, enrollment) => sum + enrollment.progress, 0) / data.enrollments.length
-		: 0);
-	
-	// Recent activity
-	const recentEnrollments = $derived(data.enrollments
-		.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-		.slice(0, 3));
-	
-	const recentCertificates = $derived(data.certificates.slice(0, 3));
 </script>
 
 <svelte:head>
 	<title>Dashboard - NaijaLingua</title>
 </svelte:head>
 
-<div class="p-8">
-	<!-- Welcome Header -->
+<div class="p-6">
+	<!-- Page Header -->
 	<div class="mb-8">
-		<h1 class="text-3xl font-bold text-gray-900">
-			Welcome back, {data.user.name}!
-		</h1>
-		<p class="text-gray-600 mt-2 text-lg">
-			Continue your language learning journey
-		</p>
+		<h1 class="text-2xl font-bold text-gray-900">Welcome back, {data.user.name}!</h1>
+		<p class="mt-1 text-gray-600">Continue your language learning journey</p>
 	</div>
-	
+
 	<!-- Stats Cards -->
-	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-		<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-			<div class="flex items-center">
-				<div class="p-3 rounded-full bg-blue-100">
-					<BookOpen class="h-6 w-6 text-blue-600" />
+	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+		<div class="bg-white rounded-xl border border-gray-200 p-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<p class="text-sm font-medium text-gray-600">Courses Enrolled</p>
+					<p class="text-2xl font-bold text-gray-900">{data.enrollments?.length || 0}</p>
 				</div>
-				<div class="ml-4">
-					<h3 class="text-2xl font-bold text-gray-900">{totalCourses}</h3>
-					<p class="text-gray-600 text-sm font-medium">Enrolled Courses</p>
-				</div>
-			</div>
-		</div>
-		
-		<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-			<div class="flex items-center">
-				<div class="p-3 rounded-full bg-green-100">
-					<CheckCircle class="h-6 w-6 text-green-600" />
-				</div>
-				<div class="ml-4">
-					<h3 class="text-2xl font-bold text-gray-900">{completedCourses}</h3>
-					<p class="text-gray-600 text-sm font-medium">Completed</p>
+				<div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+					<Book class="h-6 w-6 text-green-600" />
 				</div>
 			</div>
 		</div>
-		
-		<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-			<div class="flex items-center">
-				<div class="p-3 rounded-full bg-purple-100">
-					<TrendingUp class="h-6 w-6 text-purple-600" />
+
+		<div class="bg-white rounded-xl border border-gray-200 p-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<p class="text-sm font-medium text-gray-600">Certificates Earned</p>
+					<p class="text-2xl font-bold text-gray-900">{data.certificates?.length || 0}</p>
 				</div>
-				<div class="ml-4">
-					<h3 class="text-2xl font-bold text-gray-900">{formatProgress(averageProgress)}</h3>
-					<p class="text-gray-600 text-sm font-medium">Avg. Progress</p>
+				<div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+					<Trophy class="h-6 w-6 text-green-600" />
 				</div>
 			</div>
 		</div>
-		
-		<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-			<div class="flex items-center">
-				<div class="p-3 rounded-full bg-amber-100">
-					<Award class="h-6 w-6 text-amber-600" />
+
+		<div class="bg-white rounded-xl border border-gray-200 p-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<p class="text-sm font-medium text-gray-600">Courses Created</p>
+					<p class="text-2xl font-bold text-gray-900">{data.courses?.length || 0}</p>
 				</div>
-				<div class="ml-4">
-					<h3 class="text-2xl font-bold text-gray-900">{data.certificates.length}</h3>
-					<p class="text-gray-600 text-sm font-medium">Certificates</p>
+				<div class="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
+					<TrendingUp class="h-6 w-6 text-orange-600" />
+				</div>
+			</div>
+		</div>
+
+		<div class="bg-white rounded-xl border border-gray-200 p-6">
+			<div class="flex items-center justify-between">
+				<div>
+					<p class="text-sm font-medium text-gray-600">Total Students</p>
+					<p class="text-2xl font-bold text-gray-900">{data.totalEnrollments || 0}</p>
+				</div>
+				<div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+					<Clock class="h-6 w-6 text-purple-600" />
 				</div>
 			</div>
 		</div>
 	</div>
-	
-	<!-- Instructor/Admin Create Course Section -->
-	{#if data.user.role === 'INSTRUCTOR' || data.user.role === 'ADMIN'}
-		<div class="mb-10">
-			<div class="bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl p-8 text-white">
-				<div class="flex items-center justify-between">
-					<div>
-						<h2 class="text-2xl font-bold mb-2">Create African Language Course</h2>
-						<p class="text-emerald-100 mb-4">
-							Build engaging courses with AI-powered content from authentic African language datasets
-						</p>
-						<div class="flex items-center gap-4 text-sm">
-							<div class="flex items-center gap-2">
-								<div class="w-2 h-2 bg-white rounded-full"></div>
-								<span>MAVEN + Igbo API</span>
-							</div>
-							<div class="flex items-center gap-2">
-								<div class="w-2 h-2 bg-white rounded-full"></div>
-								<span>CommonVoice Audio</span>
-							</div>
-							<div class="flex items-center gap-2">
-								<div class="w-2 h-2 bg-white rounded-full"></div>
-								<span>Lanfrica Datasets</span>
-							</div>
-						</div>
-					</div>
-					<div class="text-right">
-						<a href="/dashboard/create-course" 
-						   class="inline-flex items-center gap-2 bg-white text-emerald-600 px-6 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-colors">
-							<PlusCircle class="w-5 h-5" />
-							Create Course
-						</a>
-					</div>
+
+	<!-- Content Sections -->
+	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+		<!-- Recent Courses -->
+		<div class="lg:col-span-2">
+			<div class="bg-white rounded-xl border border-gray-200 p-6">
+				<div class="flex items-center justify-between mb-6">
+					<h2 class="text-lg font-semibold text-gray-900">Continue Learning</h2>
+					<a href="/dashboard/courses" class="text-sm text-green-600 hover:text-green-700 font-medium">View all</a>
 				</div>
-			</div>
-		</div>
-	{/if}
-	
-	<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-		<!-- Continue Learning -->
-		<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-			<div class="flex items-center justify-between mb-6">
-				<h2 class="text-2xl font-bold text-gray-900">Continue Learning</h2>
-				<a href="/dashboard/courses" class="text-primary hover:text-primary/80 text-sm font-semibold flex items-center">
-					View All
-					<ArrowRight class="w-4 h-4 ml-1" />
-				</a>
-			</div>
-			
-			{#if recentEnrollments.length === 0}
-				<div class="text-center py-12">
-					<BookOpen class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-					<p class="text-gray-600 mb-6 text-lg">No courses enrolled yet</p>
-					<a href="/courses" class="inline-flex items-center px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors">
-						Browse Courses
-					</a>
-				</div>
-			{:else}
-				<div class="space-y-4">
-					{#each recentEnrollments as enrollment}
-						<div class="flex items-center justify-between p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-							<div class="flex-1">
-								<h3 class="font-semibold text-gray-900 text-lg">{enrollment.course.title}</h3>
-								<p class="text-sm text-gray-600">
-									{formatLanguage(enrollment.course.language)} • {formatLevel(enrollment.course.level)}
-								</p>
-								<div class="mt-2">
-									<div class="flex items-center justify-between text-sm text-gray-600 mb-1">
-										<span>Progress</span>
-										<span>{formatProgress(enrollment.progress)}</span>
-									</div>
-									<div class="w-full bg-gray-200 rounded-full h-2">
-										<div 
-											class="bg-primary h-2 rounded-full" 
-											style="width: {enrollment.progress}%"
-										></div>
+				
+				{#if data.courses && data.courses.length > 0}
+					<div class="space-y-4">
+						{#each data.courses.slice(0, 3) as course}
+							<div class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+								<div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+									<Book class="h-6 w-6 text-white" />
+								</div>
+								<div class="ml-4 flex-1">
+									<h3 class="text-sm font-medium text-gray-900">{course.title}</h3>
+									<p class="text-sm text-gray-600">{course.description}</p>
+									<div class="mt-2">
+										<div class="flex items-center justify-between text-xs text-gray-500">
+											<span>Active course</span>
+											<span>{course.language} • {course.level}</span>
+										</div>
 									</div>
 								</div>
+								<div class="ml-4">
+									<a 
+										href="/instructor/courses/{course.id}" 
+										class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
+									>
+										<Play class="h-4 w-4 mr-1" />
+										Manage
+									</a>
+								</div>
 							</div>
-							<a 
-								href="/courses/{enrollment.courseId}"
-								class="ml-4 p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+						{/each}
+					</div>
+				{:else}
+					<div class="text-center py-8">
+						<Book class="mx-auto h-12 w-12 text-gray-400" />
+						<h3 class="mt-4 text-sm font-medium text-gray-900">No courses yet</h3>
+						<p class="mt-2 text-sm text-gray-500">Start your learning journey by enrolling in a course.</p>
+						<div class="mt-4">
+							<a
+								href="/courses"
+								class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors"
 							>
-								<Play class="w-5 h-5" />
+								Browse Courses
 							</a>
 						</div>
-					{/each}
-				</div>
-			{/if}
-		</div>
-		
-		<!-- Recent Achievements -->
-		<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-			<div class="flex items-center justify-between mb-6">
-				<h2 class="text-2xl font-bold text-gray-900">Recent Achievements</h2>
-				<a href="/dashboard/certificates" class="text-primary hover:text-primary/80 text-sm font-semibold flex items-center">
-					View All
-					<ArrowRight class="w-4 h-4 ml-1" />
-				</a>
+					</div>
+				{/if}
 			</div>
-			
-			{#if recentCertificates.length === 0}
-				<div class="text-center py-12">
-					<Award class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-					<p class="text-gray-600 mb-2 text-lg">No certificates earned yet</p>
-					<p class="text-gray-500 text-sm">Complete courses to earn certificates</p>
-				</div>
-			{:else}
-				<div class="space-y-4">
-					{#each recentCertificates as certificate}
-						<div class="flex items-center p-6 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
-							<div class="p-3 bg-amber-100 rounded-full mr-4">
-								<Award class="w-6 h-6 text-amber-600" />
-							</div>
-							<div class="flex-1">
-								<h3 class="font-semibold text-gray-900 text-lg">{certificate.course.title}</h3>
-								<p class="text-sm text-gray-600 mt-1">
-									{formatLanguage(certificate.course.language)} • Score: {Math.round(certificate.score)}%
-								</p>
-								<p class="text-xs text-gray-500 mt-1">
-									Earned on {formatDate(certificate.dateIssued)}
-								</p>
-							</div>
-						</div>
-					{/each}
-				</div>
-			{/if}
 		</div>
-	</div>
-	
-	<!-- Quick Actions -->
-	<!-- Quick Actions -->
-	<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-		<h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-			<a href="/courses" class="flex items-center p-6 bg-primary/5 rounded-xl hover:bg-primary/10 transition-colors group">
-				<BookOpen class="w-10 h-10 text-primary mr-4 group-hover:scale-110 transition-transform" />
-				<div>
-					<h3 class="font-semibold text-gray-900 text-lg">Browse Courses</h3>
-					<p class="text-sm text-gray-600">Discover new languages</p>
+
+		<!-- Right Sidebar -->
+		<div class="space-y-6">
+			<!-- Learning Goals -->
+			<div class="bg-white rounded-xl border border-gray-200 p-6">
+				<h3 class="text-lg font-semibold text-gray-900 mb-4">Learning Goals</h3>
+				<div class="space-y-3">
+					<div class="flex items-center justify-between">
+						<span class="text-sm text-gray-600">Daily lessons</span>
+						<span class="text-sm font-medium text-gray-900">2/3</span>
+					</div>
+					<div class="w-full bg-gray-200 rounded-full h-2">
+						<div class="bg-green-600 h-2 rounded-full" style="width: 66%"></div>
+					</div>
+					
+					<div class="flex items-center justify-between mt-4">
+						<span class="text-sm text-gray-600">Weekly streak</span>
+						<span class="text-sm font-medium text-gray-900">5/7 days</span>
+					</div>
+					<div class="w-full bg-gray-200 rounded-full h-2">
+						<div class="bg-green-600 h-2 rounded-full" style="width: 71%"></div>
+					</div>
 				</div>
-			</a>
-			
-			<a href="/dashboard/certificates" class="flex items-center p-6 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors group">
-				<Award class="w-10 h-10 text-amber-600 mr-4 group-hover:scale-110 transition-transform" />
-				<div>
-					<h3 class="font-semibold text-gray-900 text-lg">View Certificates</h3>
-					<p class="text-sm text-gray-600">Download achievements</p>
+			</div>
+
+			<!-- Quick Actions -->
+			<div class="bg-white rounded-xl border border-gray-200 p-6">
+				<h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+				<div class="space-y-3">
+					<a 
+						href="/courses" 
+						class="block w-full text-left px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+					>
+						Browse All Courses
+					</a>
+					<a 
+						href="/dashboard/analytics" 
+						class="block w-full text-left px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+					>
+						View Progress Report
+					</a>
+					<a 
+						href="/dashboard/settings" 
+						class="block w-full text-left px-4 py-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+					>
+						Account Settings
+					</a>
 				</div>
-			</a>
-			
-			<a href="/dashboard/settings" class="flex items-center p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group">
-				<Settings class="w-10 h-10 text-gray-600 mr-4 group-hover:scale-110 transition-transform" />
-				<div>
-					<h3 class="font-semibold text-gray-900 text-lg">Account Settings</h3>
-					<p class="text-sm text-gray-600">Manage your profile</p>
-				</div>
-			</a>
+			</div>
 		</div>
 	</div>
 </div>
+

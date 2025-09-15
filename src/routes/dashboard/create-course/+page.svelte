@@ -71,6 +71,30 @@
 	function formatLanguageName(code: string) {
 		return data.supportedLanguages.find(lang => lang.code === code)?.name || code;
 	}
+
+	// Prevent accidental form submission
+	function validateForm(event: SubmitEvent) {
+		const target = event.target as HTMLFormElement;
+		const formData = new FormData(target);
+		const title = formData.get('title') as string;
+		
+		if (!title || title.trim().length < 3) {
+			event.preventDefault();
+			alert('Please enter a course title with at least 3 characters.');
+			return false;
+		}
+		
+		// Additional validation for AI content
+		if (useAIGeneration) {
+			if (!selectedLanguage || !selectedLevel || !selectedTopic) {
+				event.preventDefault();
+				alert('Please select language, level, and topic for AI content generation.');
+				return false;
+			}
+		}
+		
+		return true;
+	}
 </script>
 
 <svelte:head>
@@ -144,7 +168,7 @@
 		</div>
 	{/if}
 	
-	<form method="POST" action="?/createCourse" use:enhance class="space-y-8">
+	<form method="POST" action="?/createCourse" use:enhance class="space-y-8" onsubmit={validateForm}>
 		<!-- Basic Course Information -->
 		<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 			<h2 class="text-xl font-semibold text-gray-900 mb-6">Course Information</h2>
@@ -161,6 +185,7 @@
 						required
 						placeholder="e.g., Master Igbo Greetings and Conversation"
 						class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						onkeydown={(event) => { if(event.key === 'Enter') event.preventDefault(); }}
 					/>
 				</div>
 				
@@ -190,6 +215,7 @@
 					rows="4"
 					placeholder="Describe what students will learn in this course..."
 					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					onkeydown={(event) => { if(event.key === 'Enter' && !event.shiftKey) event.preventDefault(); }}
 				></textarea>
 			</div>
 			
@@ -206,6 +232,7 @@
 						step="0.01"
 						placeholder="0.00"
 						class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						onkeydown={(event) => { if(event.key === 'Enter') event.preventDefault(); }}
 					/>
 				</div>
 			</div>
@@ -415,7 +442,7 @@
 			
 			<button 
 				type="submit"
-				class="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
+				class="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
 			>
 				<BookOpen class="w-5 h-5" />
 				{useAIGeneration ? 'Create Course with AI Content' : 'Create Course'}

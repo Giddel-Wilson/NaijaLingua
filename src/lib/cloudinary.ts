@@ -69,6 +69,16 @@ export async function uploadToCloudinary(
         };
     } catch (error) {
         console.error('Cloudinary upload error:', error);
+        console.error('Cloudinary config:', {
+            cloud_name: CLOUDINARY_CLOUD_NAME,
+            api_key: CLOUDINARY_API_KEY ? 'SET' : 'NOT SET',
+            api_secret: CLOUDINARY_API_SECRET ? 'SET' : 'NOT SET'
+        });
+        
+        if (error instanceof Error) {
+            throw new Error(`Cloudinary upload failed: ${error.message}`);
+        }
+        
         throw new Error('Failed to upload file to Cloudinary');
     }
 }

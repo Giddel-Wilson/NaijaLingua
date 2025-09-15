@@ -22,17 +22,36 @@ export function generateToken(user: Pick<User, 'id' | 'email' | 'role'>): string
 		{
 			userId: user.id,
 			email: user.email,
-			role: user.role
+			role: user.role,
+			iat: Math.floor(Date.now() / 1000) // Issued at timestamp
 		},
 		JWT_SECRET,
-		{ expiresIn: '7d' }
+		{ expiresIn: '30d' } // Extended to 30 days
 	);
 }
 
 export function verifyToken(token: string): JWTPayload | null {
 	try {
-		return jwt.verify(token, JWT_SECRET) as JWTPayload;
-	} catch {
+		const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+		
+		// Additional validation
+		if (!decoded.userId || !decoded.email) {
+			console.log('Invalid JWT payload - missing required fields');
+			return null;
+		}
+		
+		return decoded;
+	} catch (error) {
+		// More detailed error logging for debugging
+		if (error instanceof Error) {
+			if (error.name === 'TokenExpiredError') {
+				console.log('JWT token expired');
+			} else if (error.name === 'JsonWebTokenError') {
+				console.log('JWT token invalid:', error.message);
+			} else {
+				console.log('JWT verification error:', error.message);
+			}
+		}
 		return null;
 	}
 }

@@ -11,7 +11,17 @@ export function formatLanguage(language: Language): string {
 		KANURI: 'Kanuri',
 		IBIBIO: 'Ibibio',
 		EDO: 'Edo',
-		IJAW: 'Ijaw'
+		IJAW: 'Ijaw',
+		PIDGIN: 'Pidgin',
+		SWAHILI: 'Swahili',
+		AMHARIC: 'Amharic',
+		WOLOF: 'Wolof',
+		AKAN: 'Akan',
+		ZULU: 'Zulu',
+		XHOSA: 'Xhosa',
+		AFRIKAANS: 'Afrikaans',
+		SOMALI: 'Somali',
+		OROMO: 'Oromo'
 	};
 	return languageMap[language] || language;
 }
