@@ -18,11 +18,18 @@
 	} from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import AlertModal from '$lib/components/AlertModal.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	let startTime: number;
+	
+	// Alert modal state
+	let showAlertModal = $state(false);
+	let alertMessage = $state('');
+	let alertTitle = $state('');
+	let alertType = $state<'success' | 'error' | 'info' | 'warning'>('info');
 	
 	// Quiz state
 	let currentQuizIndex = $state(0);
@@ -163,7 +170,10 @@
 		
 		// If there are quizzes, don't allow completion until quizzes are done
 		if (hasQuizzes && currentQuizIndex < currentQuizzes.length) {
-			alert('Please complete all quizzes before finishing this session.');
+			alertTitle = 'Quizzes Required';
+			alertMessage = 'Please complete all quizzes before finishing this session.';
+			alertType = 'warning';
+			showAlertModal = true;
 			return;
 		}
 		
@@ -227,10 +237,15 @@
 	function startQuizModal() {
 		if (!hasQuizzes || !canTakeQuiz) {
 			if (!hasQuizzes) {
-				alert('No quiz is available for this lesson.');
+				alertTitle = 'No Quiz Available';
+				alertMessage = 'No quiz is available for this lesson.';
+				alertType = 'info';
 			} else {
-				alert('You have already passed this quiz with 80% or higher!');
+				alertTitle = 'Quiz Already Passed';
+				alertMessage = 'You have already passed this quiz with 80% or higher!';
+				alertType = 'success';
 			}
+			showAlertModal = true;
 			return;
 		}
 		
@@ -399,7 +414,10 @@
 				const lessonId = data.course.lessons[i]?.id;
 				const progress = data.lessonProgress.find(p => p.lessonId === lessonId);
 				if (!progress || !progress.completed) {
-					alert(`Please complete Session ${i + 1} before accessing Session ${sessionNumber}.`);
+					alertTitle = 'Session Locked';
+					alertMessage = `Please complete Session ${i + 1} before accessing Session ${sessionNumber}.`;
+					alertType = 'warning';
+					showAlertModal = true;
 					return;
 				}
 			}
@@ -1042,3 +1060,12 @@
 {/if}
 
 {/if}
+
+<!-- Alert Modal -->
+<AlertModal
+	bind:isOpen={showAlertModal}
+	title={alertTitle}
+	message={alertMessage}
+	type={alertType}
+	onClose={() => {}}
+/>

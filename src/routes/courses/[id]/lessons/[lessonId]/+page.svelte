@@ -2,9 +2,16 @@
 	import { BookOpen, Clock, ArrowLeft, ArrowRight, CheckCircle, Award, Play } from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import AlertModal from '$lib/components/AlertModal.svelte';
+	import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
 	import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+		let isCompleting = $state(false);
+	let completionError = $state('');
+	let showContinueModal = $state(false);
+	let showCongratsModal = $state(false);
+
+	const { data }: { data: PageData } = $props();
 
 	let startTime: number;
 
@@ -51,14 +58,10 @@
 				
 				// If there's a next lesson, offer to continue
 				if (data.nextLesson) {
-					const shouldContinue = confirm('Lesson completed! Would you like to continue to the next lesson?');
-					if (shouldContinue) {
-						goto(`/courses/${data.courseId}/lessons/${data.nextLesson.id}`);
-					}
+					showContinueModal = true;
 				} else {
 					// Course completed
-					alert('Congratulations! You have completed this course!');
-					goto(`/courses/${data.courseId}`);
+					showCongratsModal = true;
 				}
 			}
 		} catch (error) {
@@ -328,3 +331,25 @@
 		margin-bottom: 1rem;
 	}
 </style>
+
+<!-- Continue to Next Lesson Modal -->
+<ConfirmationModal
+	bind:isOpen={showContinueModal}
+	title="Lesson Completed!"
+	message="Would you like to continue to the next lesson?"
+	confirmText="Continue"
+	cancelText="Stay Here"
+	variant="info"
+	onConfirm={() => goto(`/courses/${data.courseId}/lessons/${data.nextLesson?.id}`)}
+	onCancel={() => {}}
+/>
+
+<!-- Course Completed Modal -->
+<AlertModal
+	bind:isOpen={showCongratsModal}
+	title="Congratulations!"
+	message="You have completed this course!"
+	type="success"
+	buttonText="View Course"
+	onClose={() => goto(`/courses/${data.courseId}`)}
+/>
