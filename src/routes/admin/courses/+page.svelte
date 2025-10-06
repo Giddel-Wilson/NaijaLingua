@@ -32,7 +32,6 @@
   // Confirmation modal state
   let showDeleteConfirm = $state(false);
   let courseToDelete = $state<string | null>(null);
-  let deleteFormElement = $state<HTMLFormElement | null>(null);
 
   const languages = [
     'YORUBA', 'IGBO', 'HAUSA', 'EFIK', 'TIV', 'FULFULDE', 
@@ -417,7 +416,7 @@
                           method="POST" 
                           action="?/delete" 
                           use:enhance
-                          bind:this={deleteFormElement}
+                          id="delete-form-{course.id}"
                         >
                           <input type="hidden" name="courseId" value={course.id} />
                           <button
@@ -513,8 +512,11 @@
   bind:show={showDeleteConfirm}
   message="Are you sure you want to delete this course? This action cannot be undone."
   onConfirm={() => {
-    if (deleteFormElement && courseToDelete) {
-      deleteFormElement.requestSubmit();
+    if (courseToDelete) {
+      const form = document.getElementById(`delete-form-${courseToDelete}`) as HTMLFormElement;
+      if (form) {
+        form.requestSubmit();
+      }
     }
   }}
 />
