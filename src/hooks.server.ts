@@ -1,7 +1,10 @@
 import '$lib/env'; // Load and validate environment variables
 import type { Handle } from '@sveltejs/kit';
 import { verifyToken } from '$lib/auth';
-import { db } from '$lib/db';
+import { db, startDatabaseKeepAlive } from '$lib/db';
+
+// Start database keep-alive to prevent Neon from sleeping
+startDatabaseKeepAlive();
 
 export const handle: Handle = async ({ event, resolve }) => {
 	// Get token from cookies
