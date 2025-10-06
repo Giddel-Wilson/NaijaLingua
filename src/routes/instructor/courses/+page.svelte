@@ -11,6 +11,8 @@
 		Calendar,
 		MoreVertical
 	} from 'lucide-svelte';
+	import AlertModal from '$lib/components/AlertModal.svelte';
+	import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -18,6 +20,15 @@
 	let { data }: { data: PageData } = $props();
 
 	let showFilterDropdown = false;
+	
+	// Modal states
+	let showAlertModal = $state(false);
+	let alertMessage = $state('');
+	let alertTitle = $state('');
+	let alertType = $state<'success' | 'error' | 'warning' | 'info'>('error');
+	
+	let showDeleteConfirm = $state(false);
+	let courseIdToDelete = $state<string | null>(null);
 
 	function formatDate(date: Date | string) {
 		return new Date(date).toLocaleDateString('en-US', {
@@ -61,12 +72,15 @@
 	}
 
 	async function deleteCourse(courseId: string) {
-		if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
-			return;
-		}
+		courseIdToDelete = courseId;
+		showDeleteConfirm = true;
+	}
+	
+	async function confirmDelete() {
+		if (!courseIdToDelete) return;
 
 		try {
-			const response = await fetch(`/api/courses/${courseId}`, {
+			const response = await fetch(`/api/courses/${courseIdToDelete}`, {
 				method: 'DELETE'
 			});
 
@@ -74,11 +88,17 @@
 				// Reload page to update course list
 				window.location.reload();
 			} else {
-				alert('Failed to delete course');
+				alertTitle = 'Delete Failed';
+				alertMessage = 'Failed to delete course';
+				alertType = 'error';
+				showAlertModal = true;
 			}
 		} catch (error) {
 			console.error('Error deleting course:', error);
-			alert('Failed to delete course');
+			alertTitle = 'Delete Failed';
+			alertMessage = 'Failed to delete course';
+			alertType = 'error';
+			showAlertModal = true;
 		}
 	}
 
@@ -98,11 +118,17 @@
 				// Reload page to update course list
 				window.location.reload();
 			} else {
-				alert('Failed to update course status');
+				alertTitle = 'Update Failed';
+				alertMessage = 'Failed to update course status';
+				alertType = 'error';
+				showAlertModal = true;
 			}
 		} catch (error) {
 			console.error('Error updating course status:', error);
-			alert('Failed to update course status');
+			alertTitle = 'Update Failed';
+			alertMessage = 'Failed to update course status';
+			alertType = 'error';
+			showAlertModal = true;
 		}
 	}
 </script>
@@ -296,6 +322,21 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Alert Modal -->
+<AlertModal
+	bind:show={showAlertModal}
+	title={alertTitle}
+	message={alertMessage}
+	type={alertType}
+/>
+
+<!-- Delete Confirmation Modal -->
+<ConfirmationModal
+	bind:show={showDeleteConfirm}
+	message="Are you sure you want to delete this course? This action cannot be undone."
+	onConfirm={confirmDelete}
+/>
 
 <style>
 	.line-clamp-2 {

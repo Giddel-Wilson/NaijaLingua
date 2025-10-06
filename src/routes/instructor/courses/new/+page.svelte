@@ -8,10 +8,17 @@
 	} from 'lucide-svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import AlertModal from '$lib/components/AlertModal.svelte';
 
 	let isLoading = false;
 	let previewImage: string | null = null;
 	let imageFile: File | null = null;
+	
+	// Modal states
+	let showAlertModal = $state(false);
+	let alertMessage = $state('');
+	let alertTitle = $state('');
+	let alertType = $state<'success' | 'error' | 'warning' | 'info'>('error');
 
 	// Form data
 	let courseData = {
@@ -81,7 +88,10 @@
 		event.preventDefault();
 		
 		if (!courseData.title.trim()) {
-			alert('Please enter a course title');
+			alertTitle = 'Validation Error';
+			alertMessage = 'Please enter a course title';
+			alertType = 'warning';
+			showAlertModal = true;
 			return;
 		}
 
@@ -113,11 +123,17 @@
 				goto(`/instructor/courses/${result.id}`);
 			} else {
 				const error = await response.text();
-				alert(`Failed to create course: ${error}`);
+				alertTitle = 'Creation Failed';
+				alertMessage = `Failed to create course: ${error}`;
+				alertType = 'error';
+				showAlertModal = true;
 			}
 		} catch (error) {
 			console.error('Error creating course:', error);
-			alert('Failed to create course. Please try again.');
+			alertTitle = 'Creation Failed';
+			alertMessage = 'Failed to create course. Please try again.';
+			alertType = 'error';
+			showAlertModal = true;
 		} finally {
 			isLoading = false;
 		}
@@ -385,3 +401,11 @@
 		</div>
 	</form>
 </div>
+
+<!-- Alert Modal -->
+<AlertModal
+	bind:show={showAlertModal}
+	title={alertTitle}
+	message={alertMessage}
+	type={alertType}
+/>

@@ -19,6 +19,7 @@
   import { enhance } from '$app/forms';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
   import type { PageData, ActionData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -27,6 +28,11 @@
   let selectedStatus = data.filters.status;
   let selectedLanguage = data.filters.language;
   let selectedLevel = data.filters.level;
+  
+  // Confirmation modal state
+  let showDeleteConfirm = $state(false);
+  let courseToDelete = $state<string | null>(null);
+  let deleteFormElement = $state<HTMLFormElement | null>(null);
 
   const languages = [
     'YORUBA', 'IGBO', 'HAUSA', 'EFIK', 'TIV', 'FULFULDE', 
@@ -407,15 +413,19 @@
                         </form>
 
                         <!-- Delete -->
-                        <form method="POST" action="?/delete" use:enhance>
+                        <form 
+                          method="POST" 
+                          action="?/delete" 
+                          use:enhance
+                          bind:this={deleteFormElement}
+                        >
                           <input type="hidden" name="courseId" value={course.id} />
                           <button
-                            type="submit"
+                            type="button"
                             class="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-                            onclick={(e) => {
-                              if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
-                                e.preventDefault();
-                              }
+                            onclick={() => {
+                              courseToDelete = course.id;
+                              showDeleteConfirm = true;
                             }}
                           >
                             <Trash2 class="h-4 w-4 mr-2" />
@@ -497,3 +507,14 @@
     {/if}
   </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<ConfirmationModal
+  bind:show={showDeleteConfirm}
+  message="Are you sure you want to delete this course? This action cannot be undone."
+  onConfirm={() => {
+    if (deleteFormElement && courseToDelete) {
+      deleteFormElement.requestSubmit();
+    }
+  }}
+/>
