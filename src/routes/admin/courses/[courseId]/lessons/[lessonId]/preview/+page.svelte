@@ -10,6 +10,18 @@
 	let vocabulary = $derived(data.vocabulary);
 	let culturalContent = $derived(data.culturalContent);
 
+	// Audio playback state
+	let playingAudio = $state<string | null>(null);
+	let speechSynthesis = $state<SpeechSynthesis | null>(null);
+	let currentUtterance = $state<SpeechSynthesisUtterance | null>(null);
+
+	// Initialize speech synthesis
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			speechSynthesis = window.speechSynthesis;
+		}
+	});
+
 	// Parse lesson content - use $derived.by for complex computations
 	let parsedContent = $derived.by(() => {
 		if (!lesson.contentHtml) return null;
@@ -32,6 +44,43 @@
 	let contentSummary = $derived(parsedContent?.summary || '');
 	let contentPronunciation = $derived(parsedContent?.pronunciation || '');
 	let contentExercises = $derived(parsedContent?.exercises || []);
+
+	// Audio playback function
+	function playAudio(text: string, itemId: string) {
+		// Stop any currently playing audio
+		if (speechSynthesis && currentUtterance) {
+			speechSynthesis.cancel();
+		}
+		
+		// Use Web Speech API for text-to-speech
+		if (speechSynthesis && text) {
+			playingAudio = itemId;
+			
+			const utterance = new SpeechSynthesisUtterance(text);
+			utterance.lang = 'ig-NG'; // Igbo language code
+			utterance.rate = 0.8; // Slightly slower for clarity
+			utterance.pitch = 1.0;
+			
+			// Try to find Igbo voice
+			const voices = speechSynthesis.getVoices();
+			const igboVoice = voices.find(voice => voice.lang.startsWith('ig'));
+			if (igboVoice) {
+				utterance.voice = igboVoice;
+			}
+			
+			utterance.onend = () => {
+				playingAudio = null;
+			};
+			
+			utterance.onerror = () => {
+				playingAudio = null;
+				console.warn('Speech synthesis error for:', text);
+			};
+			
+			currentUtterance = utterance;
+			speechSynthesis.speak(utterance);
+		}
+	}
 </script>
 
 <svelte:head>
@@ -102,7 +151,7 @@
 			<h2 class="text-xl font-semibold text-gray-900 mb-4">Lesson Content</h2>
 			
 			<!-- Debug Information -->
-			<div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+			<!-- <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
 				<h3 class="font-semibold mb-2">Debug Info:</h3>
 				<p><strong>Has contentHtml:</strong> {!!lesson.contentHtml}</p>
 				<p><strong>Content length:</strong> {lesson.contentHtml?.length || 0}</p>
@@ -127,7 +176,7 @@
 						<pre class="text-xs mt-2 bg-white p-2 rounded">{JSON.stringify(Object.keys(parsedContent), null, 2)}</pre>
 					</details>
 				{/if}
-			</div>
+			</div> -->
 			
 			{#if parsedContent}
 				<!-- Introduction -->
@@ -145,10 +194,22 @@
 					<div class="mb-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-3">Key Vocabulary</h3>
 						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-							{#each contentVocabulary as vocab}
+							{#each contentVocabulary as vocab, index}
 								<div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
 									<div class="flex items-center justify-between mb-2">
-										<span class="font-semibold text-gray-900">{vocab.igbo || vocab.word || 'N/A'}</span>
+										<div class="flex items-center gap-2">
+											<span class="font-semibold text-gray-900">{vocab.igbo || vocab.word || 'N/A'}</span>
+											<button
+												type="button"
+												onclick={() => playAudio(vocab.igbo || vocab.word || '', `vocab-${index}`)}
+												class="p-1 hover:bg-blue-100 rounded transition-colors"
+												class:animate-pulse={playingAudio === `vocab-${index}`}
+												title="Play pronunciation"
+												disabled={!vocab.igbo && !vocab.word}
+											>
+												<Volume2 class="w-4 h-4 {playingAudio === `vocab-${index}` ? 'text-blue-600' : 'text-gray-500'}" />
+											</button>
+										</div>
 										{#if vocab.pronunciation}
 											<span class="text-sm text-gray-500">/{vocab.pronunciation}/</span>
 										{/if}
@@ -181,11 +242,23 @@
 					<div class="mb-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-3">Practical Examples</h3>
 						<div class="space-y-3">
-							{#each examples as example}
+							{#each examples as example, exampleIndex}
 								<div class="p-3 bg-green-50 rounded-lg border border-green-200">
 									<div class="flex justify-between items-start">
 										<div class="flex-1">
-											<p class="font-medium text-gray-900">{example.igbo || example.phrase || 'N/A'}</p>
+											<div class="flex items-center gap-2">
+												<p class="font-medium text-gray-900">{example.igbo || example.phrase || 'N/A'}</p>
+												<button
+													type="button"
+													onclick={() => playAudio(example.igbo || example.phrase || '', `example-${exampleIndex}`)}
+													class="p-1 hover:bg-green-100 rounded transition-colors"
+													class:animate-pulse={playingAudio === `example-${exampleIndex}`}
+													title="Play pronunciation"
+													disabled={!example.igbo && !example.phrase}
+												>
+													<Volume2 class="w-4 h-4 {playingAudio === `example-${exampleIndex}` ? 'text-green-600' : 'text-gray-500'}" />
+												</button>
+											</div>
 											<p class="text-gray-700 text-sm">{example.english || example.translation || 'Translation not available'}</p>
 										</div>
 										{#if example.pronunciation}
@@ -213,10 +286,22 @@
 					<div class="mb-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-3">Additional Words</h3>
 						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-							{#each contentWords as word}
+							{#each contentWords as word, wordIndex}
 								<div class="p-4 bg-orange-50 rounded-lg border-l-4 border-orange-400">
 									<div class="flex items-center justify-between mb-2">
-										<span class="font-semibold text-gray-900">{word.igbo || word.word || 'N/A'}</span>
+										<div class="flex items-center gap-2">
+											<span class="font-semibold text-gray-900">{word.igbo || word.word || 'N/A'}</span>
+											<button
+												type="button"
+												onclick={() => playAudio(word.igbo || word.word || '', `word-${wordIndex}`)}
+												class="p-1 hover:bg-orange-100 rounded transition-colors"
+												class:animate-pulse={playingAudio === `word-${wordIndex}`}
+												title="Play pronunciation"
+												disabled={!word.igbo && !word.word}
+											>
+												<Volume2 class="w-4 h-4 {playingAudio === `word-${wordIndex}` ? 'text-orange-600' : 'text-gray-500'}" />
+											</button>
+										</div>
 										{#if word.pronunciation}
 											<span class="text-sm text-gray-500">/{word.pronunciation}/</span>
 										{/if}
@@ -236,11 +321,23 @@
 					<div class="mb-6">
 						<h3 class="text-lg font-medium text-gray-900 mb-3">Key Phrases</h3>
 						<div class="space-y-3">
-							{#each contentPhrases as phrase}
+							{#each contentPhrases as phrase, phraseIndex}
 								<div class="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
 									<div class="flex justify-between items-start">
 										<div class="flex-1">
-											<p class="font-medium text-gray-900">{phrase.igbo || phrase.phrase || 'N/A'}</p>
+											<div class="flex items-center gap-2">
+												<p class="font-medium text-gray-900">{phrase.igbo || phrase.phrase || 'N/A'}</p>
+												<button
+													type="button"
+													onclick={() => playAudio(phrase.igbo || phrase.phrase || '', `phrase-${phraseIndex}`)}
+													class="p-1 hover:bg-indigo-100 rounded transition-colors"
+													class:animate-pulse={playingAudio === `phrase-${phraseIndex}`}
+													title="Play pronunciation"
+													disabled={!phrase.igbo && !phrase.phrase}
+												>
+													<Volume2 class="w-4 h-4 {playingAudio === `phrase-${phraseIndex}` ? 'text-indigo-600' : 'text-gray-500'}" />
+												</button>
+											</div>
 											<p class="text-gray-700 text-sm">{phrase.english || phrase.translation || 'Translation not available'}</p>
 										</div>
 										{#if phrase.pronunciation}
@@ -285,12 +382,12 @@
 				{/if}
 
 				<!-- Raw JSON for Debug (Admin View) -->
-				<details class="mt-6">
+				<!-- <details class="mt-6">
 					<summary class="cursor-pointer text-sm text-gray-500 hover:text-gray-700">View Raw Content (Developer)</summary>
 					<div class="mt-2 p-4 bg-gray-100 rounded-lg border">
 						<pre class="text-xs text-gray-600 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(parsedContent, null, 2)}</pre>
 					</div>
-				</details>
+				</details> -->
 
 			{:else if lesson.contentHtml}
 				<!-- Fallback for HTML content -->
@@ -406,5 +503,18 @@
 	
 	.prose li {
 		margin-bottom: 0.25rem;
+	}
+
+	@keyframes pulse {
+		0%, 100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+	}
+
+	.animate-pulse {
+		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
 </style>

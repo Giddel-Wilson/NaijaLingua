@@ -201,6 +201,18 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		const totalLessons = course.lessons.length;
 		const courseProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
+		// Debug quiz status
+		console.log('Quiz Status Debug:', {
+			lessonTitle: currentLesson.title,
+			hasQuizzes: quizStatus.hasQuizzes,
+			totalQuizzes: currentLessonQuizzes.length,
+			quizAttemptsCount: quizAttempts.length,
+			bestScore: quizStatus.bestScore,
+			hasPassed: quizStatus.hasPassed,
+			canTakeQuiz: quizStatus.canTakeQuiz,
+			totalAttempts: quizStatus.totalAttempts
+		});
+
 		return {
 			enrollment,
 			course: course,

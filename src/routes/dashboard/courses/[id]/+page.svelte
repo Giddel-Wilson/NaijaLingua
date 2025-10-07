@@ -51,18 +51,23 @@
 	// Course completion modal state
 	let showCourseCompletionModal = $state(false);
 	
-	// Quiz scoring state - Initialize from server data (80% pass system)
+	// Quiz scoring state - Reactive values derived from server data (80% pass system)
 	let quizScore = $state(0);
-	let quizPassed = $state(data.quizStatus?.hasPassed === true); // Explicit boolean check
-	let totalAttempts = $state(data.quizStatus?.totalAttempts || 0);
-	let bestScore = $state(data.quizStatus?.bestScore || 0);
-	let canTakeQuiz = $state(data.quizStatus?.canTakeQuiz ?? true);
+	let quizPassed = $derived(data.quizStatus?.hasPassed === true); // Reactive from data
+	let totalAttempts = $derived(data.quizStatus?.totalAttempts || 0); // Reactive from data
+	let bestScore = $derived(data.quizStatus?.bestScore || 0); // Reactive from data
+	let canTakeQuiz = $derived(data.quizStatus?.canTakeQuiz ?? true); // Reactive from data
 	let quizResults = $state<any[]>([]);
 	let quizStatusLoaded = $state(true);  // No need to load from API anymore
 	
 	// Word navigation state
 	let wordIndex = $state(0);
 	let isShowingDefinition = $state(false);
+
+	// Audio playback state
+	let playingAudio = $state<string | null>(null);
+	let speechSynthesis: SpeechSynthesis | null = null;
+	let currentUtterance: SpeechSynthesisUtterance | null = null;
 
 	// Get current lesson quizzes
 	let currentQuizzes = $derived(data.currentLesson?.quizzes || []);
@@ -131,12 +136,9 @@
 	onMount(() => {
 		startTime = Date.now();
 		
-		// Initialize quiz state from server data (80% pass system)
-		if (data.quizStatus) {
-			totalAttempts = data.quizStatus.totalAttempts;
-			bestScore = data.quizStatus.bestScore;
-			canTakeQuiz = data.quizStatus.canTakeQuiz;
-			quizPassed = data.quizStatus.hasPassed;
+		// Initialize speech synthesis
+		if (typeof window !== 'undefined') {
+			speechSynthesis = window.speechSynthesis;
 		}
 
 		return () => {
@@ -162,6 +164,43 @@
 			});
 		} catch (error) {
 			console.error('Failed to update time spent:', error);
+		}
+	}
+
+	// Audio playback function
+	function playAudio(text: string, itemId: string) {
+		// Stop any currently playing audio
+		if (speechSynthesis && currentUtterance) {
+			speechSynthesis.cancel();
+		}
+		
+		// Use Web Speech API for text-to-speech
+		if (speechSynthesis && text) {
+			playingAudio = itemId;
+			
+			const utterance = new SpeechSynthesisUtterance(text);
+			utterance.lang = 'ig-NG'; // Igbo language code
+			utterance.rate = 0.8; // Slightly slower for clarity
+			utterance.pitch = 1.0;
+			
+			// Fallback to English if Igbo voice not available
+			const voices = speechSynthesis.getVoices();
+			const igboVoice = voices.find(voice => voice.lang.startsWith('ig'));
+			if (igboVoice) {
+				utterance.voice = igboVoice;
+			}
+			
+			utterance.onend = () => {
+				playingAudio = null;
+			};
+			
+			utterance.onerror = () => {
+				playingAudio = null;
+				console.warn('Speech synthesis error for:', text);
+			};
+			
+			currentUtterance = utterance;
+			speechSynthesis.speak(utterance);
 		}
 	}
 
@@ -424,20 +463,6 @@
 		}
 		goto(`/dashboard/courses/${data.course.id}?session=${sessionNumber}`);
 	}
-
-	function getLanguageFlag(language: string) {
-		const flags: Record<string, string> = {
-			YORUBA: '🟢',
-			IGBO: '🔵',
-			HAUSA: '🟡',
-			PIDGIN: '🟠',
-			EDO: '🟣',
-			FULANI: '🔴',
-			KANURI: '⚪',
-			TIV: '🟤'
-		};
-		return flags[language] || '🌍';
-	}
 </script>
 
 <svelte:head>
@@ -501,11 +526,6 @@
 					<ArrowLeft class="h-4 w-4 mr-1" />
 					My Courses
 				</button>
-				<div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mr-3">
-					<span class="text-lg">
-						{getLanguageFlag(data.course.language)}
-					</span>
-				</div>
 				<div>
 					<h1 class="text-xl font-bold text-gray-900">{data.course.title}</h1>
 					<p class="text-sm text-gray-600">Session {data.currentSession} of {data.totalSessions}{data.currentLesson ? `: ${data.currentLesson.title}` : ''}</p>
@@ -570,9 +590,6 @@
 				{#if data.currentLesson}
 					<!-- Lesson Header -->
 					<div class="mb-6">
-						<div class="text-4xl mb-4 text-center">
-							{getLanguageFlag(data.course.language)}
-						</div>
 						<h2 class="text-3xl font-bold text-gray-900 mb-2">{data.currentLesson.title}</h2>
 						{#if data.currentLesson.description}
 							<p class="text-lg text-gray-600 mb-4">{data.currentLesson.description}</p>
@@ -594,21 +611,27 @@
 							<div class="space-y-4">
 								<h3 class="text-xl font-semibold text-gray-900 mb-4">📚 Key Vocabulary</h3>
 								
-								<div class="grid gap-4 md:grid-cols-2">
-									{#each lessonData.vocabulary as word, wordIndex}
+							<div class="grid gap-4 md:grid-cols-2">
+								{#each lessonData.vocabulary as word, wordIndex}
+									<div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
+										<!-- Audio Button -->
+										<button
+											type="button"
+											onclick={(e) => { e.stopPropagation(); playAudio(word.igbo || '', `vocab-${wordIndex}`); }}
+											class="absolute top-3 right-3 p-2 hover:bg-blue-50 rounded-lg transition-colors z-10"
+											class:animate-pulse={playingAudio === `vocab-${wordIndex}`}
+											title="Play pronunciation"
+										>
+											<Volume2 class="w-5 h-5 {playingAudio === `vocab-${wordIndex}` ? 'text-blue-500' : 'text-blue-400'}" />
+										</button>
+										
 										<button 
-											class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer text-left w-full"
+											class="text-left w-full"
 											onclick={() => reviewWord()}
 										>
-											<div class="flex items-start justify-between mb-2">
-												<h4 class="text-lg font-bold text-gray-900">{word.igbo}</h4>
-												<span class="text-2xl">{getLanguageFlag(data.course.language)}</span>
-											</div>
 											
 											<p class="text-gray-600 italic mb-2">/{word.pronunciation}/</p>
-											<p class="text-green-700 font-medium mb-2">{word.english}</p>
-											
-											{#if word.examples && word.examples.length > 0}
+											<p class="text-green-700 font-medium mb-2">{word.english}</p>											{#if word.examples && word.examples.length > 0}
 												<div class="mt-3 pt-3 border-t border-gray-100">
 													<p class="text-sm font-medium text-gray-700 mb-1">Examples:</p>
 													{#each word.examples as example}
@@ -620,20 +643,19 @@
 												</div>
 											{/if}
 											
-											{#if word.culturalNote}
-												<div class="mt-3 pt-3 border-t border-gray-100">
-													<p class="text-xs text-purple-600 bg-purple-50 p-2 rounded">
-														💡 <strong>Cultural Note:</strong> {word.culturalNote}
-													</p>
-												</div>
-											{/if}
-										</button>
-									{/each}
+										{#if word.culturalNote}
+											<div class="mt-3 pt-3 border-t border-gray-100">
+												<p class="text-xs text-purple-600 bg-purple-50 p-2 rounded">
+													💡 <strong>Cultural Note:</strong> {word.culturalNote}
+												</p>
+											</div>
+										{/if}
+									</button>
 								</div>
+								{/each}
 							</div>
-						{/if}
-
-						<!-- Quiz Section -->
+						</div>
+					{/if}						<!-- Quiz Section -->
 						{#if hasQuizzes}
 							<div class="quiz-section mt-8 pt-8 border-t border-gray-200">
 								<h3 class="text-xl font-semibold text-gray-900 mb-4">📝 Lesson Quiz</h3>
@@ -1069,3 +1091,19 @@
 	type={alertType}
 	onClose={() => {}}
 />
+
+<style>
+	/* Audio playing animation */
+	.animate-pulse {
+		animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+	}
+	
+	@keyframes pulse {
+		0%, 100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: .5;
+		}
+	}
+</style>

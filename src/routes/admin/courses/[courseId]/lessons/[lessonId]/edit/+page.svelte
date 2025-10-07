@@ -16,7 +16,8 @@
     FileText,
     ChevronDown,
     ChevronRight,
-    X
+    X,
+    Volume2
   } from 'lucide-svelte';
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
@@ -67,6 +68,16 @@
   let activeTab = $state('content');
   let showPreview = $state(false);
   let contentEditMode = $state('structured'); // 'structured' or 'raw'
+  let playingAudio = $state<string | null>(null);
+  let speechSynthesis: SpeechSynthesis | null = null;
+  let currentUtterance: SpeechSynthesisUtterance | null = null;
+  
+  // Initialize speech synthesis
+  $effect(() => {
+    if (typeof window !== 'undefined') {
+      speechSynthesis = window.speechSynthesis;
+    }
+  });
   
   // Parse and manage structured content
   let parsedContent = $derived.by(() => {
@@ -185,6 +196,43 @@
     const hours = Math.floor(mins / 60);
     const remainingMins = mins % 60;
     return hours > 0 ? `${hours}h ${remainingMins}m` : `${remainingMins}m`;
+  }
+  
+  // Audio playback function
+  function playAudio(text: string, itemId: string) {
+    // Stop any currently playing audio
+    if (speechSynthesis && currentUtterance) {
+      speechSynthesis.cancel();
+    }
+    
+    // Use Web Speech API for text-to-speech
+    if (speechSynthesis && text) {
+      playingAudio = itemId;
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ig-NG'; // Igbo language code
+      utterance.rate = 0.8; // Slightly slower for clarity
+      utterance.pitch = 1.0;
+      
+      // Fallback to English if Igbo voice not available
+      const voices = speechSynthesis.getVoices();
+      const igboVoice = voices.find(voice => voice.lang.startsWith('ig'));
+      if (igboVoice) {
+        utterance.voice = igboVoice;
+      }
+      
+      utterance.onend = () => {
+        playingAudio = null;
+      };
+      
+      utterance.onerror = () => {
+        playingAudio = null;
+        console.warn('Speech synthesis error for:', text);
+      };
+      
+      currentUtterance = utterance;
+      speechSynthesis.speak(utterance);
+    }
   }
 </script>
 
@@ -389,7 +437,7 @@
                     <label class="block text-sm font-medium text-gray-700">
                       Lesson Content
                     </label>
-                    <div class="flex bg-gray-100 rounded-lg p-1">
+                    <!-- <div class="flex bg-gray-100 rounded-lg p-1">
                       <button
                         type="button"
                         onclick={() => contentEditMode = 'structured'}
@@ -404,7 +452,7 @@
                       >
                         Raw JSON
                       </button>
-                    </div>
+                    </div> -->
                   </div>
 
                   {#if contentEditMode === 'structured'}
@@ -432,7 +480,7 @@
                         </label>
                         <div class="space-y-3">
                           {#each structuredVocab as vocabItem, index}
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-white rounded border">
+                            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 bg-white rounded border items-center">
                               <input
                                 type="text"
                                 bind:value={vocabItem.igbo}
@@ -454,17 +502,29 @@
                                 placeholder="Pronunciation"
                                 class="px-2 py-1 border border-gray-300 rounded text-sm"
                               />
-                              <button
-                                type="button"
-                                onclick={() => {
-                                  structuredVocab.splice(index, 1);
-                                  structuredVocab = structuredVocab;
-                                  updateContentFromStructured();
-                                }}
-                                class="text-red-600 hover:text-red-800 text-sm"
-                              >
-                                Remove
-                              </button>
+                              <div class="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onclick={() => playAudio(vocabItem.igbo || '', `struct-vocab-${index}`)}
+                                  class="p-2 hover:bg-blue-50 rounded transition-colors"
+                                  class:animate-pulse={playingAudio === `struct-vocab-${index}`}
+                                  title="Play pronunciation"
+                                  disabled={!vocabItem.igbo}
+                                >
+                                  <Volume2 class="w-4 h-4 {playingAudio === `struct-vocab-${index}` ? 'text-blue-500' : 'text-gray-400'}" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onclick={() => {
+                                    structuredVocab.splice(index, 1);
+                                    structuredVocab = structuredVocab;
+                                    updateContentFromStructured();
+                                  }}
+                                  class="text-red-600 hover:text-red-800 text-sm"
+                                >
+                                  Remove
+                                </button>
+                              </div>
                             </div>
                           {/each}
                           <button
@@ -778,6 +838,16 @@
                                   /{vocabItem.pronunciation}/
                                 </div>
                               {/if}
+                              <!-- Audio Play Button -->
+                              <button 
+                                type="button"
+                                onclick={() => playAudio(vocabItem.igbo, `vocab-${index}`)}
+                                class="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                class:animate-pulse={playingAudio === `vocab-${index}`}
+                                title="Play pronunciation"
+                              >
+                                <Volume2 class="w-4 h-4 {playingAudio === `vocab-${index}` ? 'text-blue-500' : 'text-gray-400'}" />
+                              </button>
                             </div>
                             <div class="flex items-center space-x-4 mt-1">
                               <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
@@ -1051,8 +1121,8 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">Has Audio:</span>
-            <span class="font-bold {audioUrl ? 'text-green-600' : 'text-gray-400'}">
-              {audioUrl ? 'Yes' : 'No'}
+            <span class="font-bold {audioUrl || vocabulary.length > 0 || structuredVocab.length > 0 ? 'text-green-600' : 'text-gray-400'}">
+              {audioUrl || vocabulary.length > 0 || structuredVocab.length > 0 ? 'Yes' : 'No'}
             </span>
           </div>
           <div class="flex justify-between">
@@ -1084,5 +1154,19 @@
   
   :global(::-webkit-scrollbar-thumb:hover) {
     background: #a8a8a8;
+  }
+  
+  /* Audio playing animation */
+  .animate-pulse {
+    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .5;
+    }
   }
 </style>

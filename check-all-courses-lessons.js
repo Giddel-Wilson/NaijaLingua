@@ -1,71 +1,47 @@
-import { PrismaClient } from '@prisma/client';
+import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
 
-const prisma = new PrismaClient();
+dotenv.config();
 
-async function checkAllCoursesAndLessons() {
-    try {
-        console.log('🔍 Checking all courses and their lessons...\n');
+const mongoUrl = process.env.DATABASE_URL;
 
-        const courses = await prisma.course.findMany({
-            include: {
-                lessons: {
-                    select: {
-                        id: true,
-                        title: true,
-                        isPublished: true,
-                        order: true
-                    }
-                },
-                _count: {
-                    select: {
-                        lessons: true,
-                        enrollments: true
-                    }
-                }
-            }
+async function checkAll() {
+  const client = new MongoClient(mongoUrl);
+  await client.connect();
+  const db = client.db();
+
+  try {
+    const courses = await db.collection('courses').find({}).toArray();
+    console.log(`📚 Found ${courses.length} course(s):\n`);
+    
+    for (const course of courses) {
+      const lessons = await db.collection('lessons').find({ courseId: course._id.toString() }).toArray();
+      console.log(`Course: ${course.title}`);
+      console.log(`  ID: ${course._id}`);
+      console.log(`  Lessons: ${lessons.length}`);
+      if (lessons.length > 0) {
+        lessons.forEach(l => {
+          console.log(`    - ${l.title} (order: ${l.order})`);
         });
-
-        console.log(`Found ${courses.length} courses:\n`);
-
-        courses.forEach((course, index) => {
-            console.log(`${index + 1}. ${course.title}`);
-            console.log(`   ID: ${course.id}`);
-            console.log(`   Published: ${course.isPublished}`);
-            console.log(`   Lessons: ${course._count.lessons}`);
-            console.log(`   Enrollments: ${course._count.enrollments}`);
-            
-            if (course.lessons.length > 0) {
-                console.log(`   Lesson details:`);
-                course.lessons.forEach((lesson, lessonIndex) => {
-                    console.log(`     ${lessonIndex + 1}. ${lesson.title} (Published: ${lesson.isPublished}, Order: ${lesson.order})`);
-                });
-            } else {
-                console.log(`   ❌ NO LESSONS!`);
-            }
-            console.log('');
-        });
-
-        // Also check if there are any orphaned lessons
-        const allLessons = await prisma.lesson.findMany({
-            include: {
-                course: {
-                    select: {
-                        title: true
-                    }
-                }
-            }
-        });
-
-        console.log(`\n📚 Total lessons in database: ${allLessons.length}`);
-        allLessons.forEach((lesson, index) => {
-            console.log(`${index + 1}. ${lesson.title} (Course: ${lesson.course.title}, Published: ${lesson.isPublished})`);
-        });
-
-    } catch (error) {
-        console.error('Error checking courses and lessons:', error);
-    } finally {
-        await prisma.$disconnect();
+      }
+      console.log('');
     }
+    
+    // Check for orphaned lessons
+    const allLessons = await db.collection('lessons').find({}).toArray();
+    const courseIds = courses.map(c => c._id.toString());
+    const orphanedLessons = allLessons.filter(l => !courseIds.includes(l.courseId));
+    
+    console.log(`\n⚠️  Orphaned lessons (no matching course): ${orphanedLessons.length}`);
+    if (orphanedLessons.length > 0) {
+      orphanedLessons.forEach(l => {
+        console.log(`  - ${l.title} (courseId: ${l.courseId})`);
+      });
+    }
+
+  } finally {
+    await client.close();
+  }
 }
 
-checkAllCoursesAndLessons();
+checkAll();

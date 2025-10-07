@@ -1,10 +1,11 @@
 import '$lib/env'; // Load and validate environment variables
 import type { Handle } from '@sveltejs/kit';
 import { verifyToken } from '$lib/auth';
-import { db, startDatabaseKeepAlive } from '$lib/db';
+import { db } from '$lib/db';
 
-// Start database keep-alive to prevent Neon from sleeping
-startDatabaseKeepAlive();
+// Don't start keep-alive in hooks - it causes connection spam
+// Keep-alive should only run in production with proper monitoring
+// startDatabaseKeepAlive();
 
 export const handle: Handle = async ({ event, resolve }) => {
 	// Get token from cookies
@@ -50,10 +51,20 @@ export const handle: Handle = async ({ event, resolve }) => {
 			}
 		} catch (error) {
 			console.error('Auth verification error:', error);
-			// Don't clear cookie on database errors - might be temporary
-			if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
+			
+			// Handle ObjectId format errors (from database migration)
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorCode = (error as { code?: string }).code;
+			
+			if (errorCode === 'P2023' || errorMessage.includes('Malformed ObjectID')) {
+				// Clear stale cookie from old database format
+				event.cookies.delete('auth-token', { path: '/' });
+				console.log('🔄 Cleared outdated auth token (database migration)');
+			} else if (errorMessage.includes('ECONNREFUSED')) {
+				// Don't clear cookie on temporary database connection errors
 				console.log('Database connection error - keeping auth token');
 			} else {
+				// Other errors - clear cookie
 				event.cookies.delete('auth-token', { path: '/' });
 			}
 		}

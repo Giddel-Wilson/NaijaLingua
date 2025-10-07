@@ -30,31 +30,19 @@ NaijaLingua is a comprehensive e-learning platform dedicated to teaching and pre
 - Edo
 - Ijaw
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-### Frontend
-- **SvelteKit** - Full-stack framework with TypeScript
-- **TailwindCSS** - Custom Nigerian-themed design system
-- **Lucide Svelte** - Icon library
-
-### Backend
-- **SvelteKit Endpoints** - Server-side API routes
-- **Prisma ORM** - Database management
-- **PostgreSQL** - Primary database (Neon)
-- **JWT Authentication** - Secure user sessions
-
-### Development Tools
-- **TypeScript** - Type safety
-- **Zod** - Schema validation
-- **ESLint & Prettier** - Code quality
-- **Vitest** - Testing framework
+- **SvelteKit** - Modern framework with SSR and optimized builds
+- **TypeScript** - Type safety and better DX
+- **Prisma** - Type-safe database ORM
+- **MongoDB Atlas** - Cloud-hosted NoSQL database
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL database (or Neon account)
-- Git
+- MongoDB Atlas account (or local MongoDB)
+- npm or pnpm or bun
 
 ### Installation
 
@@ -76,7 +64,7 @@ NaijaLingua is a comprehensive e-learning platform dedicated to teaching and pre
    
    Update `.env` with your database URL and secrets:
    ```env
-   DATABASE_URL="your-postgresql-connection-string"
+   DATABASE_URL="your-mongodb-connection-string"
    JWT_SECRET="your-super-secret-jwt-key"
    AUTH_SECRET="your-auth-secret"
    ```
@@ -177,9 +165,9 @@ Pre-built components with Nigerian cultural elements and mobile-first responsive
 ## 🚀 Deployment
 
 ### Environment Setup
-The application is designed for deployment on Vercel with Neon PostgreSQL:
+The application is designed for deployment on Vercel with MongoDB Atlas:
 
-1. **Database**: Set up a Neon PostgreSQL database
+1. **Database**: Set up a MongoDB Atlas database
 2. **Environment Variables**: Configure in your deployment platform
 3. **Build**: The app builds automatically for production
 

@@ -19,19 +19,14 @@
   import { enhance } from '$app/forms';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import ConfirmationModal from '$lib/components/ConfirmationModal.svelte';
   import type { PageData, ActionData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
-  let searchTerm = data.filters.search;
-  let selectedStatus = data.filters.status;
-  let selectedLanguage = data.filters.language;
-  let selectedLevel = data.filters.level;
-  
-  // Confirmation modal state
-  let showDeleteConfirm = $state(false);
-  let courseToDelete = $state<string | null>(null);
+  let searchTerm = $state(data.filters.search);
+  let selectedStatus = $state(data.filters.status);
+  let selectedLanguage = $state(data.filters.language);
+  let selectedLevel = $state(data.filters.level);
 
   const languages = [
     'YORUBA', 'IGBO', 'HAUSA', 'EFIK', 'TIV', 'FULFULDE', 
@@ -111,23 +106,73 @@
     dropdownOpen = newState;
   }
 
-  function closeAllDropdowns(event?: Event) {
-    // Don't close if clicking inside a dropdown
-    if (event && event.target) {
+  // DISABLED: Click outside handler - causing modal issues
+  // Will implement a better solution later
+  /*
+  $effect(() => {
+    // CRITICAL: Do not add click listener if modal is open or opening
+    if (showDeleteConfirm || isOpeningModal) {
+      console.log('� Effect: Modal state active, NOT adding click listener');
+      return;
+    }
+    
+    const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
+      
+      // Don't close if clicking inside a dropdown
       if (target.closest('.dropdown-menu')) {
         return;
       }
+      
+      // Don't close if clicking the more button
+      if (target.closest('[data-dropdown-trigger]')) {
+        return;
+      }
+      
+      // Don't close if clicking something that opens the modal
+      if (target.closest('[data-opens-modal]')) {
+        return;
+      }
+      
+      // Close all dropdowns
+      if (Object.keys(dropdownOpen).some(key => dropdownOpen[key])) {
+        console.log('✅ Click outside: Closing dropdowns');
+        dropdownOpen = {};
+      }
+    };
+    
+    // Only add listener if we have open dropdowns
+    const hasOpenDropdowns = Object.values(dropdownOpen).some(Boolean);
+    if (hasOpenDropdowns) {
+      console.log('✅ Effect: Adding click-outside listener');
+      document.addEventListener('click', handleClickOutside);
+      return () => {
+        console.log('🧹 Effect: Removing click-outside listener');
+        document.removeEventListener('click', handleClickOutside);
+      };
     }
-    dropdownOpen = {};
+  });
+  */
+
+  
+  // Close dropdown after form submission
+  function handleFormSubmit(courseId: string) {
+    return () => {
+      dropdownOpen = {};
+      return async ({ update, result }: any) => {
+        await update();
+        // Refresh page after successful deletion
+        if (result.type === 'success') {
+          window.location.reload();
+        }
+      };
+    };
   }
 </script>
 
 <svelte:head>
   <title>Courses Management - Admin</title>
 </svelte:head>
-
-<svelte:window onclick={closeAllDropdowns} />
 
 <div class="space-y-6">
   <!-- Header -->
@@ -351,6 +396,7 @@
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative">
                 <div class="relative inline-block text-left">
                   <button
+                    data-dropdown-trigger="true"
                     onclick={(e) => toggleDropdown(course.id, e)}
                     class="flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
                   >
@@ -361,7 +407,10 @@
                     <div class="relative">
                       <div 
                         class="dropdown-menu absolute right-0 mt-2 mb-4 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                        role="menu"
+                        tabindex="-1"
                         onclick={(e) => e.stopPropagation()}
+                        onkeydown={(e) => e.key === 'Escape' && (dropdownOpen = {})}
                       >
                       <div class="py-1">
 
@@ -375,7 +424,7 @@
                         </a>
 
                         <!-- Toggle Publish -->
-                        <form method="POST" action="?/togglePublish" use:enhance>
+                        <form method="POST" action="?/togglePublish" use:enhance={handleFormSubmit(course.id)}>
                           <input type="hidden" name="courseId" value={course.id} />
                           <button
                             type="submit"
@@ -388,7 +437,7 @@
 
                         <!-- Approve/Reject -->
                         {#if !course.isApproved}
-                          <form method="POST" action="?/approve" use:enhance>
+                          <form method="POST" action="?/approve" use:enhance={handleFormSubmit(course.id)}>
                             <input type="hidden" name="courseId" value={course.id} />
                             <button
                               type="submit"
@@ -400,7 +449,7 @@
                           </form>
                         {/if}
 
-                        <form method="POST" action="?/reject" use:enhance>
+                        <form method="POST" action="?/reject" use:enhance={handleFormSubmit(course.id)}>
                           <input type="hidden" name="courseId" value={course.id} />
                           <button
                             type="submit"
@@ -415,17 +464,12 @@
                         <form 
                           method="POST" 
                           action="?/delete" 
-                          use:enhance
-                          id="delete-form-{course.id}"
+                          use:enhance={handleFormSubmit(course.id)}
                         >
                           <input type="hidden" name="courseId" value={course.id} />
                           <button
-                            type="button"
+                            type="submit"
                             class="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-                            onclick={() => {
-                              courseToDelete = course.id;
-                              showDeleteConfirm = true;
-                            }}
                           >
                             <Trash2 class="h-4 w-4 mr-2" />
                             Delete Course
@@ -507,16 +551,3 @@
   </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<ConfirmationModal
-  bind:show={showDeleteConfirm}
-  message="Are you sure you want to delete this course? This action cannot be undone."
-  onConfirm={() => {
-    if (courseToDelete) {
-      const form = document.getElementById(`delete-form-${courseToDelete}`) as HTMLFormElement;
-      if (form) {
-        form.requestSubmit();
-      }
-    }
-  }}
-/>

@@ -1,17 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto, invalidateAll } from '$app/navigation';
 	import { Menu, X, BookOpen, User, LogOut, Settings, Home } from 'lucide-svelte';
 	
 	let { user }: { user?: App.Locals['user'] } = $props();
 	
 	let mobileMenuOpen = $state(false);
-	
-	async function logout() {
-		await fetch('/auth/logout', { method: 'POST' });
-		await invalidateAll();
-		goto('/');
-	}
 	
 	function toggleMobileMenu() {
 		mobileMenuOpen = !mobileMenuOpen;
@@ -93,13 +86,15 @@
 							{/if}
 						</div>
 						<span class="text-sm text-gray-700">Welcome, {user.name}</span>
-						<button 
-							on:click={logout}
-							class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
-						>
-							<LogOut class="w-4 h-4" />
-							<span>Logout</span>
-						</button>
+						<form method="POST" action="/auth/logout">
+							<button 
+								type="submit"
+								class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 hover:text-red-600 transition-colors"
+							>
+								<LogOut class="w-4 h-4" />
+								<span>Logout</span>
+							</button>
+						</form>
 					</div>
 				{:else}
 					<div class="flex items-center space-x-3">
@@ -181,13 +176,15 @@
 							<div class="px-3 py-2 text-sm text-gray-600">
 								Signed in as {user.name}
 							</div>
-							<button 
-								on:click={() => { logout(); mobileMenuOpen = false; }}
-								class="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 w-full text-left"
-							>
-								<LogOut class="w-5 h-5" />
-								<span>Sign Out</span>
-							</button>
+							<form method="POST" action="/auth/logout">
+								<button 
+									type="submit"
+									class="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50 w-full text-left"
+								>
+									<LogOut class="w-5 h-5" />
+									<span>Sign Out</span>
+								</button>
+							</form>
 						</div>
 					{:else}
 						<div class="border-t border-gray-200 pt-2 mt-2">

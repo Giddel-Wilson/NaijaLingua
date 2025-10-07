@@ -23,7 +23,7 @@ This project followed a **hybrid approach** combining elements of:
 
 **Key Decisions:**
 - **SvelteKit Framework**: Chosen for SSR capabilities and developer experience
-- **PostgreSQL + Neon**: Cloud-first database approach for scalability
+- **MongoDB Atlas**: Cloud-hosted NoSQL database for flexible schema and scalability
 - **Tailwind CSS**: Utility-first styling for rapid UI development
 - **Component-based Architecture**: Modular, reusable UI components
 
@@ -132,7 +132,7 @@ npm run db:seed      # Sample data
 
 ### Infrastructure
 - **Hosting**: Vercel (optimized for SvelteKit)
-- **Database**: Neon PostgreSQL (serverless)
+- **Database**: MongoDB Atlas (cloud-hosted)
 - **CDN**: Vercel Edge Network
 - **Monitoring**: Built-in Vercel analytics
 

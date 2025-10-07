@@ -179,7 +179,18 @@ export const actions: Actions = {
     }
 
     try {
-      // Delete course and all related data (cascading)
+      // Delete related data first to avoid foreign key constraints
+      // Delete enrollments
+      await db.enrollment.deleteMany({
+        where: { courseId }
+      });
+      
+      // Delete certificates
+      await db.certificate.deleteMany({
+        where: { courseId }
+      });
+      
+      // Delete course (cascading deletes will handle lessons, quizzes, etc.)
       await db.course.delete({
         where: { id: courseId }
       });

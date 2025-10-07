@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String        @id @default(cuid())
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   email        String        @unique
   passwordHash String
@@ -27,7 +27,7 @@ model User {
 }
 
 model Course {
-  id           String        @id @default(cuid())
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
   title        String
   description  String?
   language     Language
@@ -39,7 +39,7 @@ model Course {
   tags         String        @default("")
   isPublished  Boolean       @default(false)
   isApproved   Boolean       @default(false)
-  createdById  String
+  createdById  String        @db.ObjectId
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   certificates Certificate[]
@@ -51,8 +51,8 @@ model Course {
 }
 
 model Lesson {
-  id            String           @id @default(cuid())
-  courseId      String
+  id            String           @id @default(auto()) @map("_id") @db.ObjectId
+  courseId      String           @db.ObjectId
   title         String
   description   String?
   contentHtml   String?
@@ -76,9 +76,9 @@ model Lesson {
 }
 
 model LessonProgress {
-  id          String    @id @default(cuid())
-  userId      String
-  lessonId    String
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String    @db.ObjectId
+  lessonId    String    @db.ObjectId
   completed   Boolean   @default(false)
   timeSpent   Int       @default(0)
   completedAt DateTime?
@@ -91,8 +91,8 @@ model LessonProgress {
 }
 
 model Quiz {
-  id            String        @id @default(cuid())
-  lessonId      String
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  lessonId      String        @db.ObjectId
   type          QuizType
   question      String
   options       Json
@@ -109,9 +109,9 @@ model Quiz {
 }
 
 model QuizAttempt {
-  id          String   @id @default(cuid())
-  userId      String
-  quizId      String
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  quizId      String   @db.ObjectId
   answer      String
   isCorrect   Boolean
   score       Int      @default(0)
@@ -122,8 +122,9 @@ model QuizAttempt {
 }
 
 model Enrollment {
-  userId           String
-  courseId         String
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @db.ObjectId
+  courseId         String    @db.ObjectId
   progress         Float     @default(0)
   score            Float?
   totalScore       Float?    @default(0)
@@ -136,14 +137,14 @@ model Enrollment {
   course           Course    @relation(fields: [courseId], references: [id])
   user             User      @relation(fields: [userId], references: [id])
 
-  @@id([userId, courseId])
+  @@unique([userId, courseId])
   @@map("enrollments")
 }
 
 model Certificate {
-  id         String   @id @default(cuid())
-  userId     String
-  courseId   String
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  courseId   String   @db.ObjectId
   score      Float
   dateIssued DateTime @default(now())
   course     Course   @relation(fields: [courseId], references: [id])
@@ -153,7 +154,7 @@ model Certificate {
 }
 
 model Vocabulary {
-  id                 String   @id @default(cuid())
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
   language           Language
   word               String
   translation        String
@@ -172,7 +173,7 @@ model Vocabulary {
 }
 
 model CulturalContent {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   language  Language
   topic     String
   title     String

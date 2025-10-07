@@ -20,7 +20,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		// Instructor-specific data
 		const courses = await db.course.findMany({
 			where: {
-				instructorId: locals.user.id
+				createdById: locals.user.id
 			},
 			include: {
 				lessons: {
@@ -63,9 +63,19 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		};
 	} else {
 		// Student-specific data (existing logic)
+		// First get all valid course IDs
+		const validCourses = await db.course.findMany({
+			select: { id: true }
+		});
+		const validCourseIds = validCourses.map(c => c.id);
+		
+		// Then fetch enrollments only for valid courses
 		const enrollments = await db.enrollment.findMany({
 			where: {
-				userId: locals.user.id
+				userId: locals.user.id,
+				courseId: {
+					in: validCourseIds
+				}
 			},
 			include: {
 				course: {

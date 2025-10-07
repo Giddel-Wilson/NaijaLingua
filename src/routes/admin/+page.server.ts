@@ -74,10 +74,14 @@ export const load: PageServerLoad = async () => {
       
       db.course.findMany({
         take: 5,
-        orderBy: { enrollments: { _count: 'desc' } },
         include: {
           createdBy: { select: { name: true } },
           _count: { select: { enrollments: true } }
+        },
+        orderBy: {
+          enrollments: {
+            _count: 'desc'
+          }
         }
       })
     ]);

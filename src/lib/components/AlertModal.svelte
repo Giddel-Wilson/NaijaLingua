@@ -74,7 +74,7 @@
 		}
 	}
 	
-	$: styles = getTypeStyles(type);
+	const styles = $derived(getTypeStyles(type));
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

@@ -1,9 +1,11 @@
-# Database Keep-Alive Solutions
+# Database Connection - MongoDB Atlas
 
-This document explains solutions to prevent your Neon database from sleeping.
+> **Note**: This application has been migrated from Neon PostgreSQL to MongoDB Atlas.
+> The keep-alive mechanism is maintained for connection health monitoring.
 
-## Problem
-Neon's free tier automatically suspends databases after 5 minutes of inactivity to save resources. This causes connection errors when the database needs to wake up.
+## Overview
+
+MongoDB Atlas provides always-on cloud database hosting with automatic connection management. Unlike serverless PostgreSQL solutions, MongoDB Atlas connections remain active and don't require wake-up periods.
 
 ## Solutions Implemented
 

@@ -20,24 +20,46 @@ export const db =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
 
-// Keep-alive mechanism to prevent Neon database from sleeping
+// Keep-alive mechanism for database connection
 let keepAliveInterval: NodeJS.Timeout | null = null;
+let consecutiveFailures = 0;
+const MAX_CONSECUTIVE_FAILURES = 3;
 
 export function startDatabaseKeepAlive() {
 	// Prevent multiple intervals
 	if (keepAliveInterval) return;
 	
-	console.log('🔄 Starting database keep-alive (ping every 4 minutes)');
+	console.log('🔄 Starting database keep-alive (ping every 5 minutes)');
 	
-	// Ping database every 4 minutes (Neon free tier sleeps after 5 minutes)
+	// Ping database every 5 minutes (less aggressive)
 	keepAliveInterval = setInterval(async () => {
 		try {
-			await db.$queryRaw`SELECT 1`;
-			console.log('💚 Database keep-alive ping successful');
-		} catch (error) {
-			console.error('❌ Database keep-alive ping failed:', error);
+			// MongoDB: Use a simple query with timeout
+			await db.user.findFirst({
+				take: 1,
+				select: { id: true }
+			});
+			
+			// Reset failure counter on success
+			if (consecutiveFailures > 0) {
+				console.log('💚 Database connection restored');
+				consecutiveFailures = 0;
+			}
+		} catch {
+			consecutiveFailures++;
+			
+			// Only log errors occasionally to avoid spam
+			if (consecutiveFailures === 1) {
+				console.warn('⚠️  Database keep-alive ping failed (will retry silently)');
+			} else if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+				console.error(`❌ Database connection issues (${consecutiveFailures} consecutive failures)`);
+				// Don't spam logs - just note it's having issues
+				if (consecutiveFailures === MAX_CONSECUTIVE_FAILURES) {
+					console.log('ℹ️  Continuing to retry in background...');
+				}
+			}
 		}
-	}, 4 * 60 * 1000); // 4 minutes
+	}, 5 * 60 * 1000); // 5 minutes (less aggressive)
 }
 
 export function stopDatabaseKeepAlive() {
@@ -51,32 +73,35 @@ export function stopDatabaseKeepAlive() {
 // Connection retry wrapper with exponential backoff
 export async function withRetry<T>(
 	operation: () => Promise<T>,
-	maxRetries: number = 5, // Increased from 3 to 5 for Neon wake-up
-	baseDelay: number = 2000 // Increased to 2s to give Neon time to wake up
+	maxRetries: number = 5, // Retry attempts for database operations
+	baseDelay: number = 2000 // Base delay of 2s between retries
 ): Promise<T> {
 	for (let attempt = 1; attempt <= maxRetries; attempt++) {
 		try {
 			return await operation();
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorCode = (error as { code?: string }).code;
+			
 			const isConnectionError = 
-				error.message?.includes("Can't reach database") ||
-				error.message?.includes('Connection refused') ||
-				error.message?.includes('ECONNREFUSED') ||
-				error.code === 'P1001';
+				errorMessage?.includes("Can't reach database") ||
+				errorMessage?.includes('Connection refused') ||
+				errorMessage?.includes('ECONNREFUSED') ||
+				errorCode === 'P1001';
 			
 			if (isConnectionError && attempt === 1) {
-				console.log('🔄 Database appears to be sleeping, waking it up...');
+				console.log('🔄 Database connection issue detected, retrying...');
 			}
 			
-			console.error(`Database operation failed (attempt ${attempt}/${maxRetries}):`, error.message);
+			console.error(`Database operation failed (attempt ${attempt}/${maxRetries}):`, errorMessage);
 			
 			if (attempt === maxRetries) {
-				throw new Error(`Database operation failed after ${maxRetries} attempts: ${error.message}`);
+				throw new Error(`Database operation failed after ${maxRetries} attempts: ${errorMessage}`);
 			}
 			
-			// Exponential backoff with longer delays for Neon: 2s, 4s, 8s, 16s...
+			// Exponential backoff: 2s, 4s, 8s, 16s...
 			const delay = baseDelay * Math.pow(2, attempt - 1);
-			console.log(`⏳ Retrying in ${delay}ms... (Neon database may be waking up)`);
+			console.log(`⏳ Retrying in ${delay}ms...`);
 			await new Promise(resolve => setTimeout(resolve, delay));
 		}
 	}
@@ -87,7 +112,8 @@ export async function withRetry<T>(
 export async function testConnection(): Promise<boolean> {
 	try {
 		await withRetry(async () => {
-			await db.$queryRaw`SELECT 1`;
+			// MongoDB: Use a simple query instead of $queryRaw
+			await db.user.findFirst();
 		});
 		console.log('✅ Database connected successfully');
 		return true;

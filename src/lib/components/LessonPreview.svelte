@@ -29,21 +29,58 @@
 	let isExpanded = $state(false);
 	let currentAudio = $state<HTMLAudioElement | null>(null);
 	let playingAudio = $state<string | null>(null);
+	let speechSynthesis: SpeechSynthesis | null = null;
+	let currentUtterance: SpeechSynthesisUtterance | null = null;
+	
+	// Initialize speech synthesis on mount
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			speechSynthesis = window.speechSynthesis;
+		}
+	});
 	
 	function toggleExpand() {
 		isExpanded = !isExpanded;
 	}
 	
-	function playAudio(audioUrl: string, wordId: string) {
+	function playAudio(text: string, wordId: string) {
+		// Stop any currently playing audio
+		if (speechSynthesis && currentUtterance) {
+			speechSynthesis.cancel();
+		}
+		
 		if (currentAudio) {
 			currentAudio.pause();
 		}
 		
-		// For demo purposes, we'll simulate audio playback
-		playingAudio = wordId;
-		setTimeout(() => {
-			playingAudio = null;
-		}, 2000);
+		// Use Web Speech API for text-to-speech
+		if (speechSynthesis && text) {
+			playingAudio = wordId;
+			
+			const utterance = new SpeechSynthesisUtterance(text);
+			utterance.lang = 'ig-NG'; // Igbo language code
+			utterance.rate = 0.8; // Slightly slower for clarity
+			utterance.pitch = 1.0;
+			
+			// Fallback to English if Igbo voice not available
+			const voices = speechSynthesis.getVoices();
+			const igboVoice = voices.find(voice => voice.lang.startsWith('ig'));
+			if (igboVoice) {
+				utterance.voice = igboVoice;
+			}
+			
+			utterance.onend = () => {
+				playingAudio = null;
+			};
+			
+			utterance.onerror = () => {
+				playingAudio = null;
+				console.warn('Speech synthesis error for:', text);
+			};
+			
+			currentUtterance = utterance;
+			speechSynthesis.speak(utterance);
+		}
 	}
 	
 	function getTypeIcon(type: string) {
@@ -155,11 +192,12 @@
 									</div>
 									<button 
 										type="button"
-										onclick={() => playAudio('audio-url', `${index}-${wordIndex}`)}
+										onclick={() => playAudio(word.word || word.igbo, `${index}-${wordIndex}`)}
 										class="p-2 hover:bg-white rounded-lg transition-colors"
 										class:animate-pulse={playingAudio === `${index}-${wordIndex}`}
+										title="Play pronunciation"
 									>
-										<Volume2 class="w-4 h-4 text-gray-400" />
+										<Volume2 class="w-4 h-4 {playingAudio === `${index}-${wordIndex}` ? 'text-blue-500' : 'text-gray-400'}" />
 									</button>
 								</div>
 							</div>
@@ -194,11 +232,12 @@
 									</div>
 									<button 
 										type="button"
-										onclick={() => playAudio('phrase-audio', `phrase-${index}-${phraseIndex}`)}
+										onclick={() => playAudio(phrase.phrase, `phrase-${index}-${phraseIndex}`)}
 										class="p-2 hover:bg-white rounded-lg transition-colors"
 										class:animate-pulse={playingAudio === `phrase-${index}-${phraseIndex}`}
+										title="Play pronunciation"
 									>
-										<Volume2 class="w-4 h-4 text-gray-400" />
+										<Volume2 class="w-4 h-4 {playingAudio === `phrase-${index}-${phraseIndex}` ? 'text-green-500' : 'text-gray-400'}" />
 									</button>
 								</div>
 							</div>
